@@ -106,39 +106,39 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 2.1 — Package & Version Infrastructure
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `src/<package>/shared/version.py`: expose `__version__ = "1.00"` and a `check_config_version(config: dict)` function that validates config version matches at startup
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `src/<package>/constants.py`: define all immutable constants (edge type labels `EXTRACTED`, `INFERRED`, `AMBIGUOUS`; confidence thresholds; max file lines guard; default token budget)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `src/<package>/__init__.py`: export public API via `__all__`, expose `__version__`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm all file sizes are ≤ 150 lines of code (comments and blank lines excluded); split immediately if approaching limit
+- [x] [P1] [Done] [Owner: AI Agent] Implement `src/<package>/shared/version.py`: expose `__version__ = "1.00"` and a `check_config_version(config: dict)` function that validates config version matches at startup
+- [x] [P1] [Done] [Owner: AI Agent] Implement `src/<package>/constants.py`: define all immutable constants (edge type labels `EXTRACTED`, `INFERRED`, `AMBIGUOUS`; confidence thresholds; max file lines guard; default token budget)
+- [x] [P1] [Done] [Owner: AI Agent] Implement `src/<package>/__init__.py`: export public API via `__all__`, expose `__version__`
+- [x] [P1] [Done] [Owner: AI Agent] Confirm all file sizes are ≤ 150 lines of code (comments and blank lines excluded); split immediately if approaching limit
 
 ### 2.2 — Configuration Manager
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `src/<package>/shared/config.py`: load `config/setup.json` at startup, validate version, expose typed getters — **zero hardcoded values anywhere else in the codebase**
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `config/rate_limits.json` with the required structure:
+- [x] [P1] [Done] [Owner: AI Agent] Implement `src/<package>/shared/config.py`: load `config/setup.json` at startup, validate version, expose typed getters — **zero hardcoded values anywhere else in the codebase**
+- [x] [P1] [Done] [Owner: AI Agent] Implement `config/rate_limits.json` with the required structure:
   ```json
   { "rate_limits": { "version": "1.00", "services": { "default": {
       "requests_per_minute": 30, "requests_per_hour": 500,
       "concurrent_max": 5, "retry_after_seconds": 30, "max_retries": 3
   }}}}
   ```
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `config/logging_config.json` — structured JSON logging config
-- [ ] [P1] [Not Started] [Owner: AI Agent] All API keys and secrets accessed exclusively via `os.environ.get("KEY_NAME")` — never as string literals
+- [x] [P1] [Done] [Owner: AI Agent] Implement `config/logging_config.json` — structured JSON logging config
+- [x] [P1] [Done] [Owner: AI Agent] All API keys and secrets accessed exclusively via `os.environ.get("KEY_NAME")` — never as string literals
 
 ### 2.3 — API Gatekeeper (`src/<package>/shared/gatekeeper.py`)
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `ApiGatekeeper` class with `__init__(self, config: RateLimitConfig)`, `execute(self, api_call, *args, **kwargs)`, and `get_queue_status(self) -> QueueStatus`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Enforce rate limits (per-minute and per-hour) before every LLM API call — queue requests if limit is reached
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement FIFO queue with configurable max depth; trigger backpressure signal when full
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement retry logic with exponential backoff for transient failures, using `max_retries` from config
-- [ ] [P1] [Not Started] [Owner: AI Agent] Log every API call (timestamp, model, input token count, output token count, cost estimate, success/failure)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm **zero** direct LLM API calls exist anywhere outside this gatekeeper
+- [x] [P1] [Done] [Owner: AI Agent] Implement `ApiGatekeeper` class with `__init__(self, config: RateLimitConfig)`, `execute(self, api_call, *args, **kwargs)`, and `get_queue_status(self) -> QueueStatus`
+- [x] [P1] [Done] [Owner: AI Agent] Enforce rate limits (per-minute and per-hour) before every LLM API call — queue requests if limit is reached
+- [x] [P1] [Done] [Owner: AI Agent] Implement FIFO queue with configurable max depth; trigger backpressure signal when full
+- [x] [P1] [Done] [Owner: AI Agent] Implement retry logic with exponential backoff for transient failures, using `max_retries` from config
+- [x] [P1] [Done] [Owner: AI Agent] Log every API call (timestamp, model, input token count, output token count, cost estimate, success/failure)
+- [x] [P1] [Done] [Owner: AI Agent] Confirm **zero** direct LLM API calls exist anywhere outside this gatekeeper
 
 ### 2.4 — SDK Layer (`src/<package>/sdk/sdk.py`)
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `ReverseEngineeringSDK` as the single entry point for all business logic
-- [ ] [P1] [Not Started] [Owner: AI Agent] Expose methods: `run_grphify(repo_path: str) -> Path`, `load_graph(graph_path: Path) -> Graph`, `build_index(graph: Graph) -> Index`, `route_skill(query: str, graph: Graph) -> Skill`, `run_agents(task: str) -> Report`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Verify that no GUI, CLI, or external caller ever accesses business logic except through this SDK class
-- [ ] [P1] [Not Started] [Owner: AI Agent] Write a `src/main.py` that wires CLI arguments → SDK → output, with no business logic of its own
+- [x] [P1] [Done] [Owner: AI Agent] Implement `ReverseEngineeringSDK` as the single entry point for all business logic
+- [x] [P1] [Done] [Owner: AI Agent] Expose methods: `run_grphify(repo_path: str) -> Path`, `load_graph(graph_path: Path) -> Graph`, `build_index(graph: Graph) -> Index`, `route_skill(query: str, graph: Graph) -> Skill`, `run_agents(task: str) -> Report`
+- [x] [P1] [Done] [Owner: AI Agent] Verify that no GUI, CLI, or external caller ever accesses business logic except through this SDK class
+- [x] [P1] [Done] [Owner: AI Agent] Write a `src/main.py` that wires CLI arguments → SDK → output, with no business logic of its own
 
 ---
 
