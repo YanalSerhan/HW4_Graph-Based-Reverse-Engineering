@@ -260,14 +260,14 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ## Phase 5 — Configuration, Security & Dependency Hygiene
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Audit every Python file: confirm **zero** hardcoded API keys, tokens, passwords, or URLs that should be configurable
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm all rate-limit values, timeouts, model names, and API endpoints are read from `config/` files via `ConfigManager`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm `.env-example` contains every secret key name with a placeholder value and an explanatory comment
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run `git log --all -- '*.env'` — confirm `.env` was never committed
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm `uv.lock` is present and committed; run `uv sync` on a clean machine to verify reproducibility
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm `pyproject.toml` specifies all dependencies with version constraints (no bare `dependency = "*"`)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm `ruff check .` returns zero errors after all code is written
-- [ ] [P1] [Not Started] [Owner: AI Agent] Update `.gitignore` to cover: `.env`, `uv.lock` (if desired to keep out of VCS), `__pycache__`, `*.pyc`, `results/` (large outputs), `data/` (cloned repos)
+- [x] [P1] [Done] [Owner: AI Agent] Audit every Python file: confirm **zero** hardcoded API keys, tokens, passwords, or URLs that should be configurable
+- [x] [P1] [Done] [Owner: AI Agent] Confirm all rate-limit values, timeouts, model names, and API endpoints are read from `config/` files via `ConfigManager`
+- [x] [P1] [Done] [Owner: AI Agent] Confirm `.env-example` contains every secret key name with a placeholder value and an explanatory comment
+- [x] [P1] [Done] [Owner: AI Agent] Run `git log --all -- '*.env'` — confirm `.env` was never committed
+- [x] [P1] [Done] [Owner: AI Agent] Confirm `uv.lock` is present and committed; run `uv sync` on a clean machine to verify reproducibility
+- [x] [P1] [Done] [Owner: AI Agent] Confirm `pyproject.toml` specifies all dependencies with version constraints (no bare `dependency = "*"`)
+- [x] [P1] [Done] [Owner: AI Agent] Confirm `ruff check .` returns zero errors after all code is written
+- [x] [P1] [Done] [Owner: AI Agent] Update `.gitignore` to cover: `.env`, `uv.lock` (if desired to keep out of VCS), `__pycache__`, `*.pyc`, `results/` (large outputs), `data/` (cloned repos)
 
 ---
 
