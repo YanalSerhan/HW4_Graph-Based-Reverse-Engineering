@@ -1,31 +1,108 @@
 """
-CLI entry point for Reverse Engineering graph tool.
-Wires CLI arguments -> SDK -> output, with no business logic of its own.
+CLI entry point for the Reverse Engineering SDK.
+
+No business logic lives here — all calls go through ReverseEngineeringSDK.
+Follows Nielsen's heuristic #5 (error prevention) with clear flag descriptions
+and #9 (help and documentation) with rich --help output.
 """
+
+from __future__ import annotations
+
 import argparse
+import json
+import sys
 from pathlib import Path
-from graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
-from graph_rev_eng.shared.config import ConfigManager
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Builds and returns the CLI argument parser."""
+    parser = argparse.ArgumentParser(
+        prog="graph-rev-eng",
+        description=(
+            "AI-powered graph-based reverse engineering of Python codebases.\n"
+            "Uses Grphify + multi-agent analysis to extract architectural insights."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--repo-url",
+        metavar="URL",
+        default="",
+        help="GitHub URL of the target repository to clone and analyse.",
+    )
+    parser.add_argument(
+        "--query",
+        metavar="TEXT",
+        default="",
+        help="Natural language query to route to the appropriate skill.",
+    )
+    parser.add_argument(
+        "--budget-tokens",
+        type=int,
+        default=8000,
+        metavar="N",
+        help="Maximum total tokens to use across all agent invocations. Default: 8000.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        metavar="DIR",
+        default="results",
+        help="Directory to write outputs (graph.json, wiki, report). Default: results/.",
+    )
+    parser.add_argument(
+        "--compact",
+        action="store_true",
+        help="Trigger /compact mid-session context summarisation before running agents.",
+    )
+    parser.add_argument(
+        "--graph-path",
+        metavar="FILE",
+        default="",
+        help="Path to an existing graph.json (skips Grphify scan).",
+    )
+    return parser
+
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Reverse Engineering of Graph Knowledge Systems")
-    parser.add_argument("--repo-url", type=str, help="GitHub URL to reverse engineer")
-    parser.add_argument("--query", type=str, help="Query for the AI agents")
-    parser.add_argument("--budget-tokens", type=int, default=8000, help="Token budget per session")
-    parser.add_argument("--output-dir", type=str, default="results", help="Output directory")
-    parser.add_argument("--compact", action="store_true", help="Trigger mid-session compaction")
-    
+    """Parses CLI arguments and delegates to the ReverseEngineeringSDK."""
+    parser = build_parser()
     args = parser.parse_args()
-    
-    # Initialize config to validate startup
-    _ = ConfigManager.get_instance()
-    
+
+    # Late import keeps startup fast and avoids circular-import risks at module level
+    from src.graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
+
     sdk = ReverseEngineeringSDK()
-    
-    if args.repo_url:
-        print(f"Running SDK on repo: {args.repo_url}")
-        sdk.run_grphify(args.repo_url)
-        # Placeholder for further operations
-        
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.query:
+        result = sdk.route_skill(args.query)
+        if result.skill:
+            print(f"Skill matched: {result.skill.name} (confidence: {result.confidence:.0%})")
+            print(f"Matched triggers: {result.matched_triggers}")
+        else:
+            print("No skill matched the query.")
+        return
+
+    if args.repo_url or args.graph_path:
+        graph_path = Path(args.graph_path) if args.graph_path else None
+        if args.repo_url and not graph_path:
+            graph_path = sdk.run_grphify(args.repo_url)
+
+        pipeline_result = sdk.run_agents(
+            task="full-analysis",
+            github_url=args.repo_url,
+            graph_path=graph_path,
+            report_path=output_dir / "final_report.md",
+        )
+        print(json.dumps(pipeline_result.token_summary, indent=2))
+        print(f"Report: {pipeline_result.report_path}")
+        if pipeline_result.errors:
+            print("Errors:", pipeline_result.errors, file=sys.stderr)
+        return
+
+    parser.print_help()
+
+
 if __name__ == "__main__":
     main()

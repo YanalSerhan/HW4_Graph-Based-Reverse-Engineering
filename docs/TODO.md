@@ -148,57 +148,58 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 3.1 — Repository Cloning & Environment Setup Agent
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement a `GitHubDownloaderAgent` (as a CrewAI `Agent` or LangGraph `node`) that: accepts a GitHub URL, clones the target repo (e.g., `BugsInPy`) into `data/`, and handles environment setup for the chosen codebase
-- [ ] [P1] [Not Started] [Owner: AI Agent] If using `BugsInPy`, implement the virtual environment setup logic per its README — document any friction in the Prompt Engineering Log
-- [ ] [P1] [Not Started] [Owner: AI Agent] Validate the clone is clean and the target Python files are accessible before proceeding
-- [ ] [P1] [Not Started] [Owner: AI Agent] Write unit tests for the cloning logic with a mock repo
+- [x] [P1] [Done] [Owner: AI Agent] Implement a `GitHubDownloaderAgent` (as a CrewAI `Agent` or LangGraph `node`) that: accepts a GitHub URL, clones the target repo (e.g., `BugsInPy`) into `data/`, and handles environment setup for the chosen codebase
+- [x] [P1] [Done] [Owner: AI Agent] If using `BugsInPy`, implement the virtual environment setup logic per its README — document any friction in the Prompt Engineering Log
+- [x] [P1] [Done] [Owner: AI Agent] Validate the clone is clean and the target Python files are accessible before proceeding
+- [x] [P1] [Done] [Owner: AI Agent] Write unit tests for the cloning logic with a mock repo
 
 ### 3.2 — Grphify Graph Generation
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run `grphify` CLI on the cloned codebase and generate `graph.json` — save to `results/`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Parse `graph.json` and build an in-memory `Graph` object with typed nodes and edges
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `GraphLoader` service that validates all three edge types (`Extracted`, `Inferred`, `Ambiguous`) are correctly parsed
-- [ ] [P1] [Not Started] [Owner: AI Agent] Parse, validate, and handle `Hyperedge` (group connections) in the graph, ensuring all members of the group are checked together when drawing conclusions
-- [ ] [P1] [Not Started] [Owner: AI Agent] Generate `hot.md` (most connected nodes / hubs) and `index.md` (compact entry point for agents) from the graph — these are the primary navigation artifacts
-- [ ] [P1] [Not Started] [Owner: AI Agent] Generate and maintain the full LLM Wiki four-layer anatomy: `/raw`, `/wiki`, `index.md`, and `log.md` (the traceability log of knowledge ingestion)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement a `CommunityDetector` service: identify communities of files using edge density analysis; label each community with its dominant responsibility
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement a `HubVsBottleneckClassifier`: distinguish healthy hubs (clear boundaries, shared abstraction) from risky god-nodes (Single Point of Failure, excessive cross-community dependencies)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Write Obsidian-compatible Wikilinks in generated `.md` files so the Vault is navigable
+- [x] [P1] [Done] [Owner: AI Agent] Run `grphify` CLI on the cloned codebase and generate `graph.json` — save to `results/`
+- [x] [P1] [Done] [Owner: AI Agent] Parse `graph.json` and build an in-memory `Graph` object with typed nodes and edges
+- [x] [P1] [Done] [Owner: AI Agent] Implement `GraphLoader` service that validates all three edge types (`Extracted`, `Inferred`, `Ambiguous`) are correctly parsed
+- [x] [P1] [Done] [Owner: AI Agent] Parse, validate, and handle `Hyperedge` (group connections) in the graph, ensuring all members of the group are checked together when drawing conclusions
+- [x] [P1] [Done] [Owner: AI Agent] Generate `hot.md` (most connected nodes / hubs) and `index.md` (compact entry point for agents) from the graph — these are the primary navigation artifacts
+- [x] [P1] [Done] [Owner: AI Agent] Generate and maintain the full LLM Wiki four-layer anatomy: `/raw`, `/wiki`, `index.md`, and `log.md` (the traceability log of knowledge ingestion)
+- [x] [P1] [Done] [Owner: AI Agent] Implement a `CommunityDetector` service: identify communities of files using edge density analysis; label each community with its dominant responsibility
+- [x] [P1] [Done] [Owner: AI Agent] Implement a `HubVsBottleneckClassifier`: distinguish healthy hubs (clear boundaries, shared abstraction) from risky god-nodes (Single Point of Failure, excessive cross-community dependencies)
+- [x] [P1] [Done] [Owner: AI Agent] Write Obsidian-compatible Wikilinks in generated `.md` files so the Vault is navigable
 
 ### 3.3 — Index-First Retrieval & Context Budget Manager
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `ContextBudgetManager`: given a query, (1) load `index.md` first, (2) select only 2–3 most relevant subgraph pages based on semantic matching, (3) assemble a position-aware context (critical rules at edges, supporting detail in middle)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement the `/compact` protocol: mid-session summarization that resets conversational noise while preserving intent, decisions, and rules at prompt edges
-- [ ] [P1] [Not Started] [Owner: AI Agent] Enforce a hard token budget per agent invocation — log every agent call's actual token consumption vs. budget
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `skillListingBudgetFraction` to allocate a specific fraction of the context window exclusively for presenting available SKILLs
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `Dropping Skill` fallback logic: gracefully omit specific skills from the agent's view when the context budget overflows
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `TokenCounter` utility: count input and output tokens for every LLM call; accumulate totals for cost analysis
+- [x] [P1] [Done] [Owner: AI Agent] Implement `ContextBudgetManager`: given a query, (1) load `index.md` first, (2) select only 2–3 most relevant subgraph pages based on semantic matching, (3) assemble a position-aware context (critical rules at edges, supporting detail in middle)
+- [x] [P1] [Done] [Owner: AI Agent] Implement the `/compact` protocol: mid-session summarization that resets conversational noise while preserving intent, decisions, and rules at prompt edges
+- [x] [P1] [Done] [Owner: AI Agent] Enforce a hard token budget per agent invocation — log every agent call's actual token consumption vs. budget
+- [x] [P1] [Done] [Owner: AI Agent] Implement `skillListingBudgetFraction` to allocate a specific fraction of the context window exclusively for presenting available SKILLs
+- [x] [P1] [Done] [Owner: AI Agent] Implement `Dropping Skill` fallback logic: gracefully omit specific skills from the agent's view when the context budget overflows
+- [x] [P1] [Done] [Owner: AI Agent] Implement `TokenCounter` utility: count input and output tokens for every LLM call; accumulate totals for cost analysis
 
 ### 3.4 — Architectural Analysis Agents
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `GraphAnalystAgent`: reads the graph, applies the five-step inference pipeline (Observe → Relate → Confidence → Context → Source), and extracts architectural insights
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `CodeInspectorAgent`: validates graph-inferred insights against the actual source code; marks `Inferred` edges as confirmed or disputed; flags `Ambiguous` edges for human review
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `ArchitecturalBugDetector`: identify structural anti-patterns — Single Points of Failure, god-nodes, missing bridges, communities with excessive external connections
-- [ ] [P1] [Not Started] [Owner: AI Agent] Map graph communities to OOP class hierarchies — check that `Extracted` call-graph edges align with the repository's class structure
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement PRD-to-implementation traceability check: verify that nodes representing documented requirements (`WHY`, `TODO`, `NOTE` annotations) are connected to their implementation nodes
+- [x] [P1] [Done] [Owner: AI Agent] Implement `GraphAnalystAgent`: reads the graph, applies the five-step inference pipeline (Observe → Relate → Confidence → Context → Source), and extracts architectural insights
+- [x] [P1] [Done] [Owner: AI Agent] Implement `CodeInspectorAgent`: validates graph-inferred insights against the actual source code; marks `Inferred` edges as confirmed or disputed; flags `Ambiguous` edges for human review
+- [x] [P1] [Done] [Owner: AI Agent] Implement `ArchitecturalBugDetector`: identify structural anti-patterns — Single Points of Failure, god-nodes, missing bridges, communities with excessive external connections
+- [x] [P1] [Done] [Owner: AI Agent] Map graph communities to OOP class hierarchies — check that `Extracted` call-graph edges align with the repository's class structure
+- [x] [P1] [Done] [Owner: AI Agent] Implement PRD-to-implementation traceability check: verify that nodes representing documented requirements (`WHY`, `TODO`, `NOTE` annotations) are connected to their implementation nodes
 
 ### 3.5 — Multi-Agent Orchestration
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Define agent roles and task assignments in a `crew.py` or LangGraph `graph.py`: GitHubDownloader → GraphAnalyst → CodeInspector → BugDetector → ReportWriter
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement agent safety guardrails:
+- [x] [P1] [Done] [Owner: AI Agent] Define agent roles and task assignments in a `crew.py` or LangGraph `graph.py`: GitHubDownloader → GraphAnalyst → CodeInspector → BugDetector → ReportWriter
+- [x] [P1] [Done] [Owner: AI Agent] Implement agent safety guardrails:
   - Read-only actions (graph traversal, index loading): autonomous
   - Reversible actions (file writes, note creation): conditional — log before executing
   - Irreversible actions (repo modification, external API calls beyond read): require explicit confirmation flag
   - `model-invocation-disable`: prevent the agent from autonomously invoking specific high-risk skills, keeping them under manual/process control
-- [ ] [P1] [Not Started] [Owner: AI Agent] Ensure no single agent exceeds the token budget — implement per-agent budget allocation
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `ReportWriterAgent`: synthesize all agent outputs into a structured markdown report saved to `results/final_report.md`
+- [x] [P1] [Done] [Owner: AI Agent] Ensure no single agent exceeds the token budget — implement per-agent budget allocation
+- [x] [P1] [Done] [Owner: AI Agent] Implement `ReportWriterAgent`: synthesize all agent outputs into a structured markdown report saved to `results/final_report.md`
 
 ### 3.6 — SKILL.md Infrastructure
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Create at least 3 SKILL.md files (e.g., `skills/graph_analysis.md`, `skills/community_detection.md`, `skills/bug_detection.md`)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Each SKILL.md must have: YAML frontmatter (name, triggers list, boundaries, routing_subgraph pointer) and a Markdown execution body (step-by-step procedure)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `SkillRouter`: given a natural language query, use semantic search over trigger phrases to select the correct SKILL.md subgraph without loading the entire graph
-- [ ] [P1] [Not Started] [Owner: AI Agent] Verify that skill loading never exceeds the allocated token budget for a single invocation
+- [x] [P1] [Done] [Owner: AI Agent] Create at least 3 SKILL.md files (e.g., `skills/graph_analysis.md`, `skills/community_detection.md`, `skills/bug_detection.md`)
+- [x] [P1] [Done] [Owner: AI Agent] Each SKILL.md must have: YAML frontmatter (name, triggers list, boundaries, routing_subgraph pointer) and a Markdown execution body (step-by-step procedure)
+- [x] [P1] [Done] [Owner: AI Agent] Implement `SkillRouter`: given a natural language query, use semantic search over trigger phrases to select the correct SKILL.md subgraph without loading the entire graph
+- [x] [P1] [Done] [Owner: AI Agent] Verify that skill loading never exceeds the allocated token budget for a single invocation
+
 
 ---
 
