@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..constants import EDGE_TYPE_EXTRACTED, EDGE_TYPE_INFERRED, EDGE_TYPE_AMBIGUOUS
+from ..constants import EDGE_TYPE_AMBIGUOUS, EDGE_TYPE_EXTRACTED, EDGE_TYPE_INFERRED
 from .graph_models import Graph, GraphEdge, GraphNode, Hyperedge
 
 logger = logging.getLogger(__name__)

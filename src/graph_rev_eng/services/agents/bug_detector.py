@@ -15,16 +15,18 @@ surfaces systemic risks that per-file linters cannot see.
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable
 
-from ..graph_models import Graph
-from ..community_detector import Community
-from ..hub_classifier import HubVsBottleneckClassifier, NodeClassification
-from ..token_counter import TokenCounter, TokenUsage
 from ...constants import EDGE_TYPE_EXTRACTED
+from ..community_detector import Community
+from ..graph_models import Graph
+from ..hub_classifier import HubVsBottleneckClassifier, NodeClassification
+from ..token_counter import TokenCounter
+from .base import BaseAgent, LLMStubMixin
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,7 @@ class ArchitecturalBug:
     recommendation: str = ""
 
 
-class ArchitecturalBugDetector:
+class ArchitecturalBugDetector(BaseAgent, LLMStubMixin):
     """
     Runs structural anti-pattern detection passes over the graph.
 
@@ -67,20 +69,35 @@ class ArchitecturalBugDetector:
         llm_call: LLMCallable | None = None,
         token_budget: int = 2000,
     ) -> None:
-        self._counter = token_counter
+        super().__init__(token_counter, token_budget)
         self._llm_call = llm_call or self._default_llm_stub
-        self._budget = token_budget
         self._classifier = HubVsBottleneckClassifier()
 
-    def run(self, graph: Graph, communities: list[Community]) -> list[ArchitecturalBug]:
-        """Runs all detection passes and returns consolidated bug list."""
+    def setup(self, graph: Graph, communities: list[Community]) -> tuple[Graph, list[Community]]:
+        """Prepares the graph and communities for bug detection passes."""
+        return graph, communities
+
+    def process(self, data: tuple[Graph, list[Community]]) -> list[ArchitecturalBug]:
+        """Runs all detection passes concurrently and returns consolidated bug list."""
+        graph, communities = data
         bugs: list[ArchitecturalBug] = []
-        bugs.extend(self._detect_spofs(graph, communities))
-        bugs.extend(self._detect_isolated_communities(communities))
-        bugs.extend(self._detect_oop_misalignment(graph))
-        bugs.extend(self._detect_prd_traceability_gaps(graph))
-        logger.info("%s detected %d architectural issues.", AGENT_NAME, len(bugs))
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self._detect_spofs, graph, communities),
+                executor.submit(self._detect_isolated_communities, communities),
+                executor.submit(self._detect_oop_misalignment, graph),
+                executor.submit(self._detect_prd_traceability_gaps, graph),
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                bugs.extend(future.result())
+
         return bugs
+
+    def format_output(self, data: list[ArchitecturalBug]) -> list[ArchitecturalBug]:
+        """Formats and logs the final list of architectural bugs."""
+        logger.info("%s detected %d architectural issues.", AGENT_NAME, len(data))
+        return data
 
     def _detect_spofs(self, graph: Graph, communities: list[Community]) -> list[ArchitecturalBug]:
         """Detects god-nodes and SPOFs via HubVsBottleneckClassifier."""
@@ -107,9 +124,7 @@ class ArchitecturalBugDetector:
             )
         return bugs
 
-    def _detect_isolated_communities(
-        self, communities: list[Community]
-    ) -> list[ArchitecturalBug]:
+    def _detect_isolated_communities(self, communities: list[Community]) -> list[ArchitecturalBug]:
         """Flags communities with > 50% external edges (excessive coupling)."""
         bugs: list[ArchitecturalBug] = []
         for community in communities:
@@ -194,7 +209,3 @@ class ArchitecturalBugDetector:
                     )
                 )
         return bugs
-
-    def _default_llm_stub(self, prompt: str) -> str:
-        """Deterministic stub for test environments without LLM access."""
-        return f"[STUB] Bug analysis pending LLM. ({len(prompt)} chars)"

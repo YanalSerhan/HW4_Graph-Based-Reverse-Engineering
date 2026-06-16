@@ -5,13 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from graph_rev_eng.services.crew import AgentCrew, PipelineConfig, PipelineResult
 
 
 class MockCloner:
     """Creates a minimal Python repo so validation passes."""
+
     def clone(self, url: str, target: Path) -> None:
         target.mkdir(parents=True, exist_ok=True)
         (target / "main.py").write_text("def run(): pass\n")
@@ -29,9 +28,7 @@ def _make_config(tmp_path: Path, has_graph: bool = True) -> PipelineConfig:
                 {"id": "n1", "label": "module_a", "type": "module", "file_path": "src/a.py"},
                 {"id": "n2", "label": "module_b", "type": "module", "file_path": "src/b.py"},
             ],
-            "edges": [
-                {"source": "n1", "target": "n2", "type": "EXTRACTED", "confidence": 1.0}
-            ],
+            "edges": [{"source": "n1", "target": "n2", "type": "EXTRACTED", "confidence": 1.0}],
             "hyperedges": [],
         }
         graph_path.write_text(json.dumps(graph_data), encoding="utf-8")
@@ -70,6 +67,7 @@ class TestAgentCrew:
 
     def test_budget_fractions_sum_to_one_or_less(self):
         from graph_rev_eng.services.crew import BUDGET_FRACTIONS
+
         assert sum(BUDGET_FRACTIONS.values()) <= 1.0
 
     def test_register_disabled_skill(self, tmp_path: Path):
@@ -77,4 +75,5 @@ class TestAgentCrew:
         crew = AgentCrew(config)
         crew.register_disabled_skill("dangerous_skill")
         from graph_rev_eng.services.crew import DISABLED_SKILLS
+
         assert "dangerous_skill" in DISABLED_SKILLS

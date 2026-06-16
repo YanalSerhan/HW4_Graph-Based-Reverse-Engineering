@@ -12,7 +12,8 @@ unavailable, matching the ~4 chars/token average for English technical text.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+import threading
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +46,12 @@ class TokenCounter:
 
     def __init__(self) -> None:
         self._records: list[TokenUsage] = []
+        self._lock = threading.Lock()
 
     def record(self, usage: TokenUsage) -> None:
         """Appends a TokenUsage record and logs the event."""
-        self._records.append(usage)
+        with self._lock:
+            self._records.append(usage)
         logger.info(
             "Token usage recorded: agent=%s model=%s prompt=%d completion=%d total=%d",
             usage.agent_name,
@@ -76,12 +79,14 @@ class TokenCounter:
     @property
     def total_prompt_tokens(self) -> int:
         """Sum of all prompt tokens recorded this session."""
-        return sum(r.prompt_tokens for r in self._records)
+        with self._lock:
+            return sum(r.prompt_tokens for r in self._records)
 
     @property
     def total_completion_tokens(self) -> int:
         """Sum of all completion tokens recorded this session."""
-        return sum(r.completion_tokens for r in self._records)
+        with self._lock:
+            return sum(r.completion_tokens for r in self._records)
 
     @property
     def total_tokens(self) -> int:
@@ -90,18 +95,21 @@ class TokenCounter:
 
     def by_agent(self, agent_name: str) -> list[TokenUsage]:
         """Returns all records for a named agent."""
-        return [r for r in self._records if r.agent_name == agent_name]
+        with self._lock:
+            return [r for r in self._records if r.agent_name == agent_name]
 
     def summary(self) -> dict[str, int]:
         """Returns a dict summary of session-level token totals."""
-        return {
-            "total_prompt_tokens": self.total_prompt_tokens,
-            "total_completion_tokens": self.total_completion_tokens,
-            "total_tokens": self.total_tokens,
-            "call_count": len(self._records),
-        }
+        with self._lock:
+            return {
+                "total_prompt_tokens": sum(r.prompt_tokens for r in self._records),
+                "total_completion_tokens": sum(r.completion_tokens for r in self._records),
+                "total_tokens": sum(r.total_tokens for r in self._records),
+                "call_count": len(self._records),
+            }
 
     def reset(self) -> None:
         """Clears all accumulated records — use at session boundaries."""
-        self._records.clear()
+        with self._lock:
+            self._records.clear()
         logger.info("TokenCounter reset.")

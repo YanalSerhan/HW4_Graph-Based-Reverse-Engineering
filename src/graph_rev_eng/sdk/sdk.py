@@ -9,14 +9,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..services.github_downloader import GitHubDownloaderAgent, GitCloner
+from ..services.community_detector import CommunityDetector
+from ..services.crew import AgentCrew, PipelineConfig, PipelineResult
+from ..services.github_downloader import GitCloner
 from ..services.graph_loader import GraphLoader
 from ..services.graph_models import Graph
-from ..services.community_detector import CommunityDetector
 from ..services.index_builder import IndexBuilder
-from ..services.skill_router import SkillRouter, RoutingResult
+from ..services.skill_router import RoutingResult, SkillRouter
 from ..services.token_counter import TokenCounter
-from ..services.crew import AgentCrew, PipelineConfig, PipelineResult
 from ..shared.config import ConfigManager
 
 RESULTS_DIR = Path("results")
@@ -37,7 +37,7 @@ class ReverseEngineeringSDK:
 
     def run_grphify(self, repo_path: str) -> tuple[Path, Path, Path]:
         """
-        Runs the Grphify CLI on repo_path and returns paths to 
+        Runs the Grphify CLI on repo_path and returns paths to
         (graph.json, graph.html, GRAPH_REPORT.md).
 
         In production, shells out to `grphify scan <repo_path>`.
@@ -59,16 +59,21 @@ class ReverseEngineeringSDK:
         except (FileNotFoundError, subprocess.CalledProcessError) as exc:
             # Grphify not installed or failed — fall back to existing path
             import logging
+
             logging.getLogger(__name__).warning(
                 "Grphify unavailable (%s). Using existing graph at %s.", exc, output_path
             )
-            
+
         # Ensure dummy outputs if they don't exist, to satisfy agents in mock environments
         if not html_path.exists():
-            html_path.write_text("<html><body>Mock Graph HTML Metadata</body></html>", encoding="utf-8")
+            html_path.write_text(
+                "<html><body>Mock Graph HTML Metadata</body></html>", encoding="utf-8"
+            )
         if not report_path.exists():
-            report_path.write_text("# Mock GRAPH_REPORT\nNo actual Grphify output available.", encoding="utf-8")
-            
+            report_path.write_text(
+                "# Mock GRAPH_REPORT\nNo actual Grphify output available.", encoding="utf-8"
+            )
+
         return output_path, html_path, report_path
 
     def load_graph(self, graph_path: Path) -> Graph:
@@ -112,9 +117,7 @@ class ReverseEngineeringSDK:
             graph_report_path=graph_report_path or (RESULTS_DIR / "GRAPH_REPORT.md"),
             wiki_dir=WIKI_DIR,
             report_path=report_path or (RESULTS_DIR / "final_report.md"),
-            total_token_budget=self._config.get_rate_limits().get(
-                "default_token_budget", 8000
-            ),
+            total_token_budget=self._config.get_rate_limits().get("default_token_budget", 8000),
             cloner=cloner,
             llm_call=llm_call,
         )

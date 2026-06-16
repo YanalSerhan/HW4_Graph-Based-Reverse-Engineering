@@ -10,8 +10,8 @@ remaining deterministic and testable.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass
 
 from .graph_models import Graph
 
@@ -90,9 +90,7 @@ class CommunityDetector:
         if root_a != root_b:
             parent[root_b] = root_a
 
-    def _group_by_root(
-        self, graph: Graph, parent: dict[str, str]
-    ) -> dict[str, list[str]]:
+    def _group_by_root(self, graph: Graph, parent: dict[str, str]) -> dict[str, list[str]]:
         """Groups node IDs by their union-find root."""
         groups: dict[str, list[str]] = defaultdict(list)
         for nid in graph.nodes:
@@ -107,8 +105,7 @@ class CommunityDetector:
             1 for e in graph.edges if e.source_id in node_set and e.target_id in node_set
         )
         external = sum(
-            1 for e in graph.edges
-            if (e.source_id in node_set) != (e.target_id in node_set)
+            1 for e in graph.edges if (e.source_id in node_set) != (e.target_id in node_set)
         )
         label = self._dominant_label(node_ids, graph)
         return Community(

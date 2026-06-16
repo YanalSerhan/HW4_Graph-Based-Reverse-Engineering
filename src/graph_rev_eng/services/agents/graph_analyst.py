@@ -15,19 +15,22 @@ distinction is critical for the CodeInspector to validate findings later.
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
-from ..graph_models import Graph
+from ...constants import EDGE_TYPE_AMBIGUOUS, EDGE_TYPE_EXTRACTED
 from ..community_detector import Community
+from ..graph_models import Graph
 from ..token_counter import TokenCounter, TokenUsage
-from ...constants import EDGE_TYPE_EXTRACTED, EDGE_TYPE_INFERRED, EDGE_TYPE_AMBIGUOUS
+from .base import BaseAgent, LLMStubMixin
 
 logger = logging.getLogger(__name__)
 
 AGENT_NAME = "GraphAnalystAgent"
+LLMCallable = Callable[[str], str]
 
 
 @dataclass
@@ -37,17 +40,13 @@ class ArchitecturalInsight:
     title: str
     observation: str
     relation: str
-    confidence_level: str   # EXTRACTED | INFERRED | AMBIGUOUS
+    confidence_level: str  # EXTRACTED | INFERRED | AMBIGUOUS
     context: str
     source_node_ids: list[str]
     raw_evidence: str = ""
 
 
-# Type alias for an injectable LLM call (keeps agents testable without a key)
-LLMCallable = Callable[[str], str]
-
-
-class GraphAnalystAgent:
+class GraphAnalystAgent(BaseAgent, LLMStubMixin):
     """
     Reads the graph and community map, applies the five-step pipeline,
     and returns a list of ArchitecturalInsights.
@@ -62,41 +61,54 @@ class GraphAnalystAgent:
         llm_call: LLMCallable | None = None,
         token_budget: int = 2000,
     ) -> None:
-        self._counter = token_counter
+        super().__init__(token_counter, token_budget)
         self._llm_call = llm_call or self._default_llm_stub
-        self._budget = token_budget
 
-    def run(
-        self, 
-        graph: Graph, 
+    def setup(
+        self,
+        graph: Graph,
         communities: list[Community],
         graph_html_path: Path | None = None,
         graph_report_path: Path | None = None,
-    ) -> list[ArchitecturalInsight]:
-        """
-        Executes the five-step pipeline and returns extracted insights.
-        Implements the three-source reading protocol using graph.json (Graph), 
-        graph.html, and GRAPH_REPORT.md.
-        """
+    ) -> tuple[Graph, list[Community], str, str]:
+        """Loads additional narrative contexts if available."""
         html_content = ""
         report_content = ""
-        
+
         if graph_html_path and graph_html_path.exists():
             html_content = graph_html_path.read_text(encoding="utf-8", errors="replace")[:1000]
-            
+
         if graph_report_path and graph_report_path.exists():
             report_content = graph_report_path.read_text(encoding="utf-8", errors="replace")[:2000]
 
+        return graph, communities, html_content, report_content
+
+    def process(self, data: tuple[Graph, list[Community], str, str]) -> list[ArchitecturalInsight]:
+        """Runs the three main insight analysis passes concurrently."""
+        graph, communities, html_content, report_content = data
         insights: list[ArchitecturalInsight] = []
-        insights.extend(self._analyse_communities(graph, communities, html_content, report_content))
-        insights.extend(self._analyse_hubs(graph, html_content, report_content))
-        insights.extend(self._analyse_ambiguous_edges(graph))
-        logger.info("%s produced %d insights.", AGENT_NAME, len(insights))
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self._analyse_communities, graph, communities, html_content, report_content
+                ),
+                executor.submit(self._analyse_hubs, graph, html_content, report_content),
+                executor.submit(self._analyse_ambiguous_edges, graph),
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                insights.extend(future.result())
+
         return insights
 
+    def format_output(self, data: list[ArchitecturalInsight]) -> list[ArchitecturalInsight]:
+        """Formats and logs the final list of architectural insights."""
+        logger.info("%s produced %d insights.", AGENT_NAME, len(data))
+        return data
+
     def _analyse_communities(
-        self, 
-        graph: Graph, 
+        self,
+        graph: Graph,
         communities: list[Community],
         html_content: str = "",
         report_content: str = "",
@@ -113,7 +125,7 @@ class GraphAnalystAgent:
                 ArchitecturalInsight(
                     title=f"Community: {community.dominant_label}",
                     observation=f"Community of {community.size} nodes with "
-                                f"{community.cohesion_ratio:.0%} cohesion.",
+                    f"{community.cohesion_ratio:.0%} cohesion.",
                     relation=response,
                     confidence_level=EDGE_TYPE_EXTRACTED,
                     context=f"Community ID {community.community_id}",
@@ -123,7 +135,7 @@ class GraphAnalystAgent:
         return results
 
     def _analyse_hubs(
-        self, 
+        self,
         graph: Graph,
         html_content: str = "",
         report_content: str = "",
@@ -132,9 +144,7 @@ class GraphAnalystAgent:
         results: list[ArchitecturalInsight] = []
         hub_nodes = [n for n in graph.nodes.values() if graph.degree(n.node_id) >= 5]
         for node in hub_nodes[:10]:  # cap at 10 to respect budget
-            prompt = (
-                f"Analyse hub node '{node.label}' (degree={graph.degree(node.node_id)}).\n"
-            )
+            prompt = f"Analyse hub node '{node.label}' (degree={graph.degree(node.node_id)}).\n"
             if report_content:
                 prompt += f"Consider this narrative context:\n{report_content[:500]}\n"
             tokens_in = self._counter.estimate_tokens(prompt)
@@ -170,8 +180,8 @@ class GraphAnalystAgent:
         ]
 
     def _community_prompt(
-        self, 
-        graph: Graph, 
+        self,
+        graph: Graph,
         community: Community,
         html_content: str = "",
         report_content: str = "",
@@ -191,18 +201,6 @@ class GraphAnalystAgent:
             prompt += f"\nNarrative Report Context:\n{report_content[:500]}\n"
         if html_content:
             prompt += f"\nGraph HTML Metadata (excerpt):\n{html_content[:200]}\n"
-            
+
         prompt += "\nWhat is the dominant architectural responsibility of this community?"
         return prompt
-
-    def _default_llm_stub(self, prompt: str) -> str:
-        """
-        Deterministic stub used when no real LLM is configured.
-
-        Returns a structured placeholder that downstream agents can parse
-        without failing, enabling full pipeline testing without API keys.
-        """
-        return (
-            "[STUB] Architectural analysis pending LLM configuration. "
-            f"Prompt length: {len(prompt)} chars."
-        )

@@ -13,15 +13,15 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 
-from .graph_models import Graph
 from .community_detector import Community
+from .graph_models import Graph
 
 logger = logging.getLogger(__name__)
 
 # Thresholds driven entirely by constants / config — no magic numbers here.
-SPOF_CROSS_COMMUNITY_RATIO = 0.6   # > 60% external edges → potential god-node
-SPOF_MIN_DEGREE = 5                 # Only classify nodes with at least this degree
-HUB_COHESION_THRESHOLD = 0.5       # Hub must have ≥ 50% internal edge cohesion
+SPOF_CROSS_COMMUNITY_RATIO = 0.6  # > 60% external edges → potential god-node
+SPOF_MIN_DEGREE = 5  # Only classify nodes with at least this degree
+HUB_COHESION_THRESHOLD = 0.5  # Hub must have ≥ 50% internal edge cohesion
 
 
 class NodeClassification(str, Enum):
@@ -95,8 +95,11 @@ class HubVsBottleneckClassifier:
 
     def spof_nodes(self, reports: list[NodeReport]) -> list[NodeReport]:
         """Filters reports to only SPOF and GOD_NODE classifications."""
-        return [r for r in reports if r.classification in {NodeClassification.SPOF,
-                                                            NodeClassification.GOD_NODE}]
+        return [
+            r
+            for r in reports
+            if r.classification in {NodeClassification.SPOF, NodeClassification.GOD_NODE}
+        ]
 
     def _build_community_map(self, communities: list[Community]) -> dict[str, int]:
         """Maps each node_id to its community_id for O(1) lookup."""
@@ -115,15 +118,14 @@ class HubVsBottleneckClassifier:
         if not all_edges:
             return 0.0
         cross = sum(
-            1 for e in all_edges
+            1
+            for e in all_edges
             if community_map.get(e.source_id, -2) != community_map.get(e.target_id, -3)
             and my_community != -1
         )
         return cross / len(all_edges)
 
-    def _classify_node(
-        self, degree: int, cross_ratio: float
-    ) -> tuple[NodeClassification, str]:
+    def _classify_node(self, degree: int, cross_ratio: float) -> tuple[NodeClassification, str]:
         """Applies heuristic rules to determine node classification."""
         if cross_ratio >= SPOF_CROSS_COMMUNITY_RATIO:
             if degree > SPOF_MIN_DEGREE * 3:

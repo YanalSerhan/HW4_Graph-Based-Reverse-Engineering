@@ -43,9 +43,7 @@ class SubprocessGitCloner:
             timeout=300,
         )
         if result.returncode != 0:
-            raise RuntimeError(
-                f"git clone failed for {url}:\n{result.stderr}"
-            )
+            raise RuntimeError(f"git clone failed for {url}:\n{result.stderr}")
 
 
 class GitHubDownloaderAgent:

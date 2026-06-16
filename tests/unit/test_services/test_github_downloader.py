@@ -9,7 +9,6 @@ import pytest
 
 from graph_rev_eng.services.github_downloader import (
     GitHubDownloaderAgent,
-    GitCloner,
 )
 
 
@@ -38,8 +37,7 @@ class TestGitHubDownloaderAgent:
         monkeypatch.chdir(tmp_path)
         mock_cloner = MagicMock()
         mock_cloner.clone.side_effect = lambda url, target: (
-            target.mkdir(parents=True, exist_ok=True) or
-            (target / "main.py").write_text("x")
+            target.mkdir(parents=True, exist_ok=True) or (target / "main.py").write_text("x")
         )
         agent = GitHubDownloaderAgent(cloner=mock_cloner)
         agent.run("https://github.com/example/my_repo")

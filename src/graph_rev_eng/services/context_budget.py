@@ -25,8 +25,8 @@ from .token_counter import TokenCounter
 
 logger = logging.getLogger(__name__)
 
-SKILL_LISTING_FRACTION = 0.15   # 15% of budget reserved for skill listing
-COMPACT_TRIGGER_RATIO = 0.80    # Trigger /compact when 80% of budget consumed
+SKILL_LISTING_FRACTION = 0.15  # 15% of budget reserved for skill listing
+COMPACT_TRIGGER_RATIO = 0.80  # Trigger /compact when 80% of budget consumed
 
 
 class FailureMode(str, Enum):
@@ -102,11 +102,16 @@ class ContextBudgetManager:
 
         self._session_consumed += tokens
         failure_mode = self.detect_failure_mode(tokens)
-        
+
         if failure_mode == FailureMode.OVERFLOW:
-            logger.error("Context OVERFLOW detected: %d tokens exceeds budget %d", tokens, self._budget)
+            logger.error(
+                "Context OVERFLOW detected: %d tokens exceeds budget %d", tokens, self._budget
+            )
         elif failure_mode == FailureMode.CONTEXT_ROT:
-            logger.warning("Context ROT detected: session consumed %d, triggering frequent compactions", self._session_consumed)
+            logger.warning(
+                "Context ROT detected: session consumed %d, triggering frequent compactions",
+                self._session_consumed,
+            )
         else:
             logger.info("Context assembled: %d tokens (budget %d)", tokens, self._budget)
 
@@ -125,7 +130,7 @@ class ContextBudgetManager:
     def detect_failure_mode(self, last_assembly_tokens: int) -> FailureMode:
         """
         Detects the current health state of the context budget.
-        
+
         Returns OVERFLOW if the last assembly exceeded the hard limit.
         Returns CONTEXT_ROT if the session is experiencing gradual decay (indicated by
         frequent compaction triggers).
@@ -156,9 +161,7 @@ class ContextBudgetManager:
         queries and avoids needing a vector store in Phase 3.
         """
         query_tokens = set(query.lower().split())
-        community_lines = [
-            ln for ln in index_text.splitlines() if "[[wiki/" in ln
-        ]
+        community_lines = [ln for ln in index_text.splitlines() if "[[wiki/" in ln]
         scored: list[tuple[str, int]] = []
         for line in community_lines:
             start = line.find("[[wiki/") + 7
@@ -171,9 +174,7 @@ class ContextBudgetManager:
         scored.sort(key=lambda x: x[1], reverse=True)
         return [page for page, _ in scored[:3]]
 
-    def _build_skill_listing(
-        self, available_skills: list[str]
-    ) -> tuple[str, list[str]]:
+    def _build_skill_listing(self, available_skills: list[str]) -> tuple[str, list[str]]:
         """
         Assembles the skill listing, dropping skills if budget overflows.
 

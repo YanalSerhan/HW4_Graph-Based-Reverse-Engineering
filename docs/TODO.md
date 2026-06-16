@@ -212,38 +212,38 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 4.1 — Object-Oriented Design Compliance
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Audit every class — ensure each has a single responsibility
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement the Modular "Building Blocks" Design paradigm: strictly separate `Data Input`, `Data Output`, and `Data Setup` for core components
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement parallel processing (e.g., Multithreading for I/O-bound tasks, Multiprocessing for CPU-bound tasks) where appropriate for performance efficiency
-- [ ] [P1] [Not Started] [Owner: AI Agent] Ensure thread-safety for all concurrent operations (e.g., using locks/queues for shared state)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Extract any duplicated logic (same function body in ≥ 2 files) into a shared base class or `Mixin`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Ensure every `Mixin` addresses exactly one concern, does not call methods of another Mixin, and is independently testable
-- [ ] [P1] [Not Started] [Owner: AI Agent] Use the Template Method pattern for all agent execution flows that share structure but differ in steps
-- [ ] [P1] [Not Started] [Owner: AI Agent] No business logic in `main.py`, CLI layer, or GUI layer — all logic lives in `services/` accessed via `sdk.py`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Apply the DRY principle: no duplicated `try/except` patterns — create a shared `safe_execute()` wrapper if needed
+- [x] [P1] [Done] [Owner: AI Agent] Audit every class — ensure each has a single responsibility
+- [x] [P1] [Done] [Owner: AI Agent] Implement the Modular "Building Blocks" Design paradigm: strictly separate `Data Input`, `Data Output`, and `Data Setup` for core components
+- [x] [P1] [Done] [Owner: AI Agent] Implement parallel processing (e.g., Multithreading for I/O-bound tasks, Multiprocessing for CPU-bound tasks) where appropriate for performance efficiency
+- [x] [P1] [Done] [Owner: AI Agent] Ensure thread-safety for all concurrent operations (e.g., using locks/queues for shared state)
+- [x] [P1] [Done] [Owner: AI Agent] Extract any duplicated logic (same function body in ≥ 2 files) into a shared base class or `Mixin`
+- [x] [P1] [Done] [Owner: AI Agent] Ensure every `Mixin` addresses exactly one concern, does not call methods of another Mixin, and is independently testable
+- [x] [P1] [Done] [Owner: AI Agent] Use the Template Method pattern for all agent execution flows that share structure but differ in steps
+- [x] [P1] [Done] [Owner: AI Agent] No business logic in `main.py`, CLI layer, or GUI layer — all logic lives in `services/` accessed via `sdk.py`
+- [x] [P1] [Done] [Owner: AI Agent] Apply the DRY principle: no duplicated `try/except` patterns — create a shared `safe_execute()` wrapper if needed
 
 ### 4.2 — Code Style & Linting
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Configure `ruff` in `pyproject.toml` with required rule sets: `E`, `F`, `W`, `I`, `N`, `UP`, `B`, `C4`, `SIM`; `line-length = 100`; `target-version = "py310"`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run `ruff check .` — confirm **zero** errors or warnings
-- [ ] [P1] [Not Started] [Owner: AI Agent] Confirm all files are ≤ 150 lines of code (split any that exceed this)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Every public function, class, and module has a `docstring` explaining **why** (rationale), not just what
-- [ ] [P1] [Not Started] [Owner: AI Agent] All variable and function names are descriptive and unambiguous — no single-letter variables except in comprehensions
-- [ ] [P1] [Not Started] [Owner: AI Agent] Consistent naming style enforced throughout (snake_case for functions/vars, PascalCase for classes)
+- [x] [P1] [Done] [Owner: AI Agent] Configure `ruff` in `pyproject.toml` with required rule sets: `E`, `F`, `W`, `I`, `N`, `UP`, `B`, `C4`, `SIM`; `line-length = 100`; `target-version = "py310"`
+- [x] [P1] [Done] [Owner: AI Agent] Run `ruff check .` — confirm **zero** errors or warnings
+- [x] [P1] [Done] [Owner: AI Agent] Confirm all files are ≤ 150 lines of code (split any that exceed this)
+- [x] [P1] [Done] [Owner: AI Agent] Every public function, class, and module has a `docstring` explaining **why** (rationale), not just what
+- [x] [P1] [Done] [Owner: AI Agent] All variable and function names are descriptive and unambiguous — no single-letter variables except in comprehensions
+- [x] [P1] [Done] [Owner: AI Agent] Consistent naming style enforced throughout (snake_case for functions/vars, PascalCase for classes)
 
 ### 4.3 — Test-Driven Development
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Follow Red → Green → Refactor for every new function: write the failing test first, implement, then refactor
-- [ ] [P1] [Not Started] [Owner: AI Agent] `tests/` directory mirrors `src/` structure: `tests/unit/test_<module>/test_<file>.py`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Every public method has at least one unit test covering the happy path and at least one edge/error case
-- [ ] [P1] [Not Started] [Owner: AI Agent] All `conftest.py` shared fixtures are in place (mock graph, mock LLM response, mock repo path)
-- [ ] [P1] [Not Started] [Owner: AI Agent] All external dependencies (LLM API, file system, GitHub clone) are mocked in unit tests — no tests make real network calls
-- [ ] [P1] [Not Started] [Owner: AI Agent] Test files themselves are ≤ 150 lines — split into multiple files if needed
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run `uv run pytest tests/` — all tests pass
+- [x] [P1] [Done] [Owner: AI Agent] Follow Red → Green → Refactor for every new function: write the failing test first, implement, then refactor
+- [x] [P1] [Done] [Owner: AI Agent] `tests/` directory mirrors `src/` structure: `tests/unit/test_<module>/test_<file>.py`
+- [x] [P1] [Done] [Owner: AI Agent] Every public method has at least one unit test covering the happy path and at least one edge/error case
+- [x] [P1] [Done] [Owner: AI Agent] All `conftest.py` shared fixtures are in place (mock graph, mock LLM response, mock repo path)
+- [x] [P1] [Done] [Owner: AI Agent] All external dependencies (LLM API, file system, GitHub clone) are mocked in unit tests — no tests make real network calls
+- [x] [P1] [Done] [Owner: AI Agent] Test files themselves are ≤ 150 lines — split into multiple files if needed
+- [x] [P1] [Done] [Owner: AI Agent] Run `uv run pytest tests/` — all tests pass
 
 ### 4.4 — Coverage & Quality Gates
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Configure coverage in `pyproject.toml`:
+- [x] [P1] [Done] [Owner: AI Agent] Configure coverage in `pyproject.toml`:
   ```toml
   [tool.coverage.run]
   source = ["src"]
@@ -251,8 +251,8 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
   [tool.coverage.report]
   fail_under = 85
   ```
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run `uv run pytest --cov=src --cov-report=term-missing` — confirm ≥ 85% coverage
-- [ ] [P1] [Not Started] [Owner: AI Agent] Document all edge cases with explicit test cases: empty graph, graph with no communities, Ambiguous-only edge graph, token budget exceeded mid-session
+- [x] [P1] [Done] [Owner: AI Agent] Run `uv run pytest --cov=src --cov-report=term-missing` — confirm ≥ 85% coverage
+- [x] [P1] [Done] [Owner: AI Agent] Document all edge cases with explicit test cases: empty graph, graph with no communities, Ambiguous-only edge graph, token budget exceeded mid-session
 - [ ] [P1] [Not Started] [Owner: AI Agent] Save automated test reports to `results/test_report.html` or `results/coverage_report/`
 - [ ] [P1] [Not Started] [Owner: AI Agent] Implement automation in a CI/CD pipeline (`automation in CI/CD pipeline`) to automatically generate and check test coverage reports
 

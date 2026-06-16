@@ -18,12 +18,12 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .graph_models import Graph
 from .community_detector import Community
+from .graph_models import Graph
 
 logger = logging.getLogger(__name__)
 
-TOP_HUB_COUNT = 10   # Number of top nodes listed in hot.md
+TOP_HUB_COUNT = 10  # Number of top nodes listed in hot.md
 
 
 class IndexBuilder:
@@ -71,9 +71,7 @@ class IndexBuilder:
             lines.append(f"| {rank} | [[{node.label}]] | {node.node_type} | {deg} |\n")
         (output_dir / "hot.md").write_text("".join(lines), encoding="utf-8")
 
-    def _write_index_md(
-        self, graph: Graph, communities: list[Community], output_dir: Path
-    ) -> None:
+    def _write_index_md(self, graph: Graph, communities: list[Community], output_dir: Path) -> None:
         """Writes index.md — compact structural map for Index-First Retrieval."""
         lines = ["# Graph Index — Entry Point for Agents\n\n"]
         lines.append(f"_Graph: {len(graph.nodes)} nodes · {len(graph.edges)} edges_\n\n")

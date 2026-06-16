@@ -17,21 +17,20 @@ set it to True to allow full pipeline execution without human prompts.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
-from .github_downloader import GitHubDownloaderAgent, GitCloner
-from .graph_loader import GraphLoader
-from .community_detector import CommunityDetector
-from .hub_classifier import HubVsBottleneckClassifier
-from .index_builder import IndexBuilder
-from .context_budget import ContextBudgetManager
-from .token_counter import TokenCounter
-from .agents.graph_analyst import GraphAnalystAgent
-from .agents.code_inspector import CodeInspectorAgent
+from ..shared.utils import safe_execute
 from .agents.bug_detector import ArchitecturalBugDetector
+from .agents.code_inspector import CodeInspectorAgent
+from .agents.graph_analyst import GraphAnalystAgent
 from .agents.report_writer import ReportWriterAgent
+from .community_detector import CommunityDetector
+from .github_downloader import GitCloner, GitHubDownloaderAgent
+from .graph_loader import GraphLoader
+from .index_builder import IndexBuilder
+from .token_counter import TokenCounter
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ BUDGET_FRACTIONS: dict[str, float] = {
     "ReportWriterAgent": 0.15,
 }
 
-DISABLED_SKILLS: set[str] = set()   # model-invocation-disable registry
+DISABLED_SKILLS: set[str] = set()  # model-invocation-disable registry
 
 
 @dataclass
@@ -59,7 +58,7 @@ class PipelineConfig:
     graph_html_path: Path | None = None
     graph_report_path: Path | None = None
     total_token_budget: int = 8000
-    confirm_irreversible: bool = False   # must be True to allow external writes
+    confirm_irreversible: bool = False  # must be True to allow external writes
     cloner: GitCloner | None = None
     llm_call: LLMCallable | None = None
 
@@ -103,9 +102,11 @@ class AgentCrew:
         insights = self._step_analyse(graph, communities, repo_path, errors)
         inspection_results = self._step_inspect(graph, insights, repo_path, errors)
         bugs = self._step_detect_bugs(graph, communities, errors)
-        
-        graph, communities, bugs = self._step_improvement_loop(graph, communities, bugs, repo_path, errors)
-        
+
+        graph, communities, bugs = self._step_improvement_loop(
+            graph, communities, bugs, repo_path, errors
+        )
+
         report_path = self._step_write_report(
             graph, communities, insights, inspection_results, bugs, errors
         )
@@ -130,61 +131,78 @@ class AgentCrew:
 
     def _step_clone(self, errors: list[str]) -> Path:
         """READ_ONLY clone step — autonomous."""
-        try:
+        def _do_clone() -> Path:
             agent = GitHubDownloaderAgent(cloner=self._config.cloner)
             return agent.run(self._config.github_url)
-        except Exception as exc:
-            errors.append(f"Clone failed: {exc}")
-            logger.error("Clone step failed: %s", exc)
-            return Path("data/unknown")
+
+        return safe_execute(
+            _do_clone,
+            error_list=errors,
+            default_return=Path("data/unknown"),
+            error_message_prefix="Clone failed",
+        )
 
     def _step_load_graph(self, errors: list[str]):  # noqa: ANN
         """READ_ONLY graph load — autonomous."""
         from .graph_models import Graph
-        try:
+
+        def _do_load() -> Graph:
             return GraphLoader().load(self._config.graph_json_path)
-        except Exception as exc:
-            errors.append(f"Graph load failed: {exc}")
-            logger.error("Graph load failed: %s", exc)
-            return Graph()
+
+        return safe_execute(
+            _do_load,
+            error_list=errors,
+            default_return=Graph(),
+            error_message_prefix="Graph load failed",
+        )
 
     def _step_detect_communities(self, graph, errors: list[str]):  # noqa: ANN
         """READ_ONLY community detection — autonomous."""
-        try:
-            return CommunityDetector().detect(graph)
-        except Exception as exc:
-            errors.append(f"Community detection failed: {exc}")
-            return []
+        return safe_execute(
+            CommunityDetector().detect,
+            graph,
+            error_list=errors,
+            default_return=[],
+            error_message_prefix="Community detection failed",
+        )
 
     def _step_build_index(self, graph, communities, errors: list[str]) -> None:
         """REVERSIBLE index build — logged before executing."""
         logger.info("[REVERSIBLE] IndexBuilder will write to %s", self._config.wiki_dir)
-        try:
-            IndexBuilder().build(graph, communities, self._config.wiki_dir)
-        except Exception as exc:
-            errors.append(f"Index build failed: {exc}")
+        safe_execute(
+            IndexBuilder().build,
+            graph,
+            communities,
+            self._config.wiki_dir,
+            error_list=errors,
+            error_message_prefix="Index build failed",
+        )
 
     def _step_analyse(self, graph, communities, repo_path, errors: list[str]):  # noqa: ANN
         """READ_ONLY graph analysis — autonomous."""
-        try:
+        def _do_analyse():  # noqa: ANN
             agent = GraphAnalystAgent(
                 self._counter,
                 llm_call=self._config.llm_call,
                 token_budget=self._budgets["GraphAnalystAgent"],
             )
             return agent.run(
-                graph, 
+                graph,
                 communities,
                 graph_html_path=self._config.graph_html_path,
-                graph_report_path=self._config.graph_report_path
+                graph_report_path=self._config.graph_report_path,
             )
-        except Exception as exc:
-            errors.append(f"Graph analysis failed: {exc}")
-            return []
+
+        return safe_execute(
+            _do_analyse,
+            error_list=errors,
+            default_return=[],
+            error_message_prefix="Graph analysis failed",
+        )
 
     def _step_inspect(self, graph, insights, repo_path, errors: list[str]):  # noqa: ANN
         """READ_ONLY source inspection — autonomous."""
-        try:
+        def _do_inspect():  # noqa: ANN
             agent = CodeInspectorAgent(
                 repo_path=repo_path,
                 token_counter=self._counter,
@@ -192,56 +210,64 @@ class AgentCrew:
                 token_budget=self._budgets["CodeInspectorAgent"],
             )
             return agent.run(graph, insights)
-        except Exception as exc:
-            errors.append(f"Code inspection failed: {exc}")
-            return []
+
+        return safe_execute(
+            _do_inspect,
+            error_list=errors,
+            default_return=[],
+            error_message_prefix="Code inspection failed",
+        )
 
     def _step_detect_bugs(self, graph, communities, errors: list[str]):  # noqa: ANN
         """READ_ONLY bug detection — autonomous."""
-        try:
+        def _do_detect():  # noqa: ANN
             agent = ArchitecturalBugDetector(
                 self._counter,
                 llm_call=self._config.llm_call,
                 token_budget=self._budgets["ArchitecturalBugDetector"],
             )
             return agent.run(graph, communities)
-        except Exception as exc:
-            errors.append(f"Bug detection failed: {exc}")
-            return []
+
+        return safe_execute(
+            _do_detect,
+            error_list=errors,
+            default_return=[],
+            error_message_prefix="Bug detection failed",
+        )
 
     def _step_improvement_loop(self, graph, communities, bugs, repo_path, errors: list[str]):  # noqa: ANN
         """REVERSIBLE improvement loop - conditionally applies fixes and verifies."""
         if not bugs:
             return graph, communities, bugs
-            
+
         logger.info("[REVERSIBLE] Starting improvement loop for %d bugs", len(bugs))
-        
+
         max_iterations = 3
         current_bugs = bugs
         current_graph = graph
         current_communities = communities
-        
+
         for i in range(max_iterations):
             if not current_bugs:
                 logger.info("Improvement loop resolved all bugs.")
                 break
-                
+
             logger.info("Improvement loop iteration %d/%d", i + 1, max_iterations)
-            
+
             # Step 1: Apply fix (Mocked for now since automated refactoring is complex)
             logger.info("Applying mock fixes for %d bugs...", len(current_bugs))
-            
+
             # Step 2: Re-run Grphify
             logger.info("Re-running Grphify to verify fix...")
             current_graph = self._step_load_graph(errors)
             current_communities = self._step_detect_communities(current_graph, errors)
-            
+
             # Step 3: Run unit tests
             logger.info("Running unit tests...")
-            
+
             # Step 4: Verify anti-pattern is resolved
             current_bugs = self._step_detect_bugs(current_graph, current_communities, errors)
-            
+
         return current_graph, current_communities, current_bugs
 
     def _step_write_report(  # noqa: PLR0913
@@ -249,13 +275,17 @@ class AgentCrew:
     ) -> Path:
         """REVERSIBLE report write — logged before executing."""
         logger.info("[REVERSIBLE] ReportWriter will write to %s", self._config.report_path)
-        try:
+        def _do_write() -> Path:
             agent = ReportWriterAgent(
                 output_path=self._config.report_path,
                 token_counter=self._counter,
                 llm_call=self._config.llm_call,
             )
             return agent.run(graph, communities, insights, inspection_results, bugs)
-        except Exception as exc:
-            errors.append(f"Report write failed: {exc}")
-            return self._config.report_path
+
+        return safe_execute(
+            _do_write,
+            error_list=errors,
+            default_return=self._config.report_path,
+            error_message_prefix="Report write failed",
+        )

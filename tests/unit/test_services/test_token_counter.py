@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from graph_rev_eng.services.token_counter import TokenCounter, TokenUsage
 
 

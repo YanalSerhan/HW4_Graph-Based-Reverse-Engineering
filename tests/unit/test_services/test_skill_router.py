@@ -8,7 +8,6 @@ import pytest
 
 from graph_rev_eng.services.skill_router import SkillRouter
 
-
 SKILL_CONTENT = """\
 ---
 name: graph_analysis

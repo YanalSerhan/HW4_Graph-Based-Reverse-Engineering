@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from graph_rev_eng.services.graph_loader import GraphLoader, GraphValidationError
 from graph_rev_eng.constants import (
+    EDGE_TYPE_AMBIGUOUS,
     EDGE_TYPE_EXTRACTED,
     EDGE_TYPE_INFERRED,
-    EDGE_TYPE_AMBIGUOUS,
 )
+from graph_rev_eng.services.graph_loader import GraphLoader, GraphValidationError
 
 
 class TestGraphLoader:
@@ -40,9 +40,7 @@ class TestGraphLoader:
         data = {
             "nodes": [{"id": "a", "label": "A", "type": "module"}],
             "edges": [],
-            "hyperedges": [
-                {"id": "he1", "members": ["a", "UNKNOWN"], "type": "EXTRACTED"}
-            ],
+            "hyperedges": [{"id": "he1", "members": ["a", "UNKNOWN"], "type": "EXTRACTED"}],
         }
         path = tmp_path / "graph.json"
         path.write_text(json.dumps(data), encoding="utf-8")
@@ -56,9 +54,7 @@ class TestGraphLoader:
                 {"id": "b", "label": "B", "type": "module"},
             ],
             "edges": [],
-            "hyperedges": [
-                {"id": "he1", "members": ["a", "b"], "type": "EXTRACTED"}
-            ],
+            "hyperedges": [{"id": "he1", "members": ["a", "b"], "type": "EXTRACTED"}],
         }
         path = tmp_path / "graph.json"
         path.write_text(json.dumps(data), encoding="utf-8")

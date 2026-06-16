@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
-from graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode, Hyperedge
 from graph_rev_eng.constants import (
+    EDGE_TYPE_AMBIGUOUS,
     EDGE_TYPE_EXTRACTED,
     EDGE_TYPE_INFERRED,
-    EDGE_TYPE_AMBIGUOUS,
 )
+from graph_rev_eng.services.graph_models import Graph, GraphNode, Hyperedge
 
 
 class TestGraphNode:

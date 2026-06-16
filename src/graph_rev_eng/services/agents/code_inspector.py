@@ -15,15 +15,17 @@ Validation outcomes:
 from __future__ import annotations
 
 import ast
+import concurrent.futures
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Callable
 
+from ...constants import EDGE_TYPE_AMBIGUOUS, EDGE_TYPE_INFERRED
 from ..graph_models import Graph, GraphEdge
 from ..token_counter import TokenCounter, TokenUsage
-from ...constants import EDGE_TYPE_INFERRED, EDGE_TYPE_AMBIGUOUS
+from .base import BaseAgent, LLMStubMixin
 from .graph_analyst import ArchitecturalInsight
 
 logger = logging.getLogger(__name__)
@@ -51,7 +53,7 @@ class InspectionResult:
     edge_type: str = ""
 
 
-class CodeInspectorAgent:
+class CodeInspectorAgent(BaseAgent, LLMStubMixin):
     """
     Validates graph insights by inspecting actual Python source files.
 
@@ -66,33 +68,42 @@ class CodeInspectorAgent:
         llm_call: LLMCallable | None = None,
         token_budget: int = 2000,
     ) -> None:
+        super().__init__(token_counter, token_budget)
         self._repo_path = repo_path
-        self._counter = token_counter
         self._llm_call = llm_call or self._default_llm_stub
-        self._budget = token_budget
 
-    def run(
-        self,
-        graph: Graph,
-        insights: list[ArchitecturalInsight],
-    ) -> list[InspectionResult]:
-        """
-        Validates insights and marks INFERRED edges as confirmed or disputed.
-
-        Returns one InspectionResult per insight.
-        """
-        results: list[InspectionResult] = []
+    def setup(
+        self, graph: Graph, insights: list[ArchitecturalInsight]
+    ) -> tuple[Graph, list[ArchitecturalInsight], list[GraphEdge], list[GraphEdge]]:
+        """Extracts necessary edge lists from the graph before processing."""
         inferred_edges = graph.edges_of_type(EDGE_TYPE_INFERRED)
         ambiguous_edges = graph.edges_of_type(EDGE_TYPE_AMBIGUOUS)
+        return graph, insights, inferred_edges, ambiguous_edges
 
-        edge_lookup = {(e.source_id, e.target_id): e for e in graph.edges}
+    def process(
+        self,
+        data: tuple[Graph, list[ArchitecturalInsight], list[GraphEdge], list[GraphEdge]],
+    ) -> list[InspectionResult]:
+        """Validates insights concurrently using a thread pool."""
+        graph, insights, inferred_edges, ambiguous_edges = data
+        results: list[InspectionResult] = []
 
-        for insight in insights:
-            result = self._validate_insight(insight, graph, inferred_edges, ambiguous_edges)
-            results.append(result)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self._validate_insight, insight, graph, inferred_edges, ambiguous_edges
+                )
+                for insight in insights
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                results.append(future.result())
 
-        logger.info("%s produced %d inspection results.", AGENT_NAME, len(results))
         return results
+
+    def format_output(self, data: list[InspectionResult]) -> list[InspectionResult]:
+        """Formats and logs the final results."""
+        logger.info("%s produced %d inspection results.", AGENT_NAME, len(data))
+        return data
 
     def validate_edge(self, edge: GraphEdge, graph: Graph) -> ValidationOutcome:
         """
@@ -112,7 +123,7 @@ class CodeInspectorAgent:
             return ValidationOutcome.SKIPPED
 
         source_file = self._repo_path / source_node.file_path
-        if not source_file.exists() or not source_file.suffix == ".py":
+        if not source_file.exists() or source_file.suffix != ".py":
             return ValidationOutcome.SKIPPED
 
         try:
@@ -139,7 +150,8 @@ class CodeInspectorAgent:
             )
 
         related_inferred = [
-            e for e in inferred_edges
+            e
+            for e in inferred_edges
             if e.source_id in insight.source_node_ids or e.target_id in insight.source_node_ids
         ]
 
@@ -152,7 +164,11 @@ class CodeInspectorAgent:
 
         outcomes = [self.validate_edge(e, graph) for e in related_inferred[:5]]
         confirmed = sum(1 for o in outcomes if o == ValidationOutcome.CONFIRMED)
-        final = ValidationOutcome.CONFIRMED if confirmed > len(outcomes) / 2 else ValidationOutcome.DISPUTED
+        final = (
+            ValidationOutcome.CONFIRMED
+            if confirmed > len(outcomes) / 2
+            else ValidationOutcome.DISPUTED
+        )
         prompt = f"Verify insight '{insight.title}': {confirmed}/{len(outcomes)} edges confirmed."
         t_in = self._counter.estimate_tokens(prompt)
         response = self._llm_call(prompt)
@@ -184,7 +200,7 @@ class CodeInspectorAgent:
     def _validate_semantic_duplicate(self, edge: GraphEdge, graph: Graph) -> ValidationOutcome:
         """
         Validates whether semantically similar nodes are actually duplicates.
-        
+
         Before flagging as duplicates, verify call sites, consumers, tests, and purpose.
         Never recommend merge based on semantic similarity alone.
         """
@@ -200,10 +216,7 @@ class CodeInspectorAgent:
         logger.info(
             "SemanticDuplicateValidator: Node '%s' and '%s' are semantically similar. "
             "Defensively disputing merge until call sites and tests are verified.",
-            source_node.label, target_node.label
+            source_node.label,
+            target_node.label,
         )
         return ValidationOutcome.DISPUTED
-
-    def _default_llm_stub(self, prompt: str) -> str:
-        """Deterministic stub for test environments without LLM access."""
-        return f"[STUB] Inspection pending LLM configuration. ({len(prompt)} chars)"

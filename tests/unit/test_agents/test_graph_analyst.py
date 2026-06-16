@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
+from graph_rev_eng.constants import EDGE_TYPE_AMBIGUOUS
 from graph_rev_eng.services.agents.graph_analyst import (
-    GraphAnalystAgent,
     ArchitecturalInsight,
+    GraphAnalystAgent,
 )
 from graph_rev_eng.services.community_detector import CommunityDetector
-from graph_rev_eng.services.token_counter import TokenCounter
-from graph_rev_eng.constants import EDGE_TYPE_AMBIGUOUS
 
 
 class TestGraphAnalystAgent:
@@ -20,7 +17,9 @@ class TestGraphAnalystAgent:
         insights = agent.run(simple_graph, communities)
         assert len(insights) > 0
 
-    def test_insights_are_architectural_insight_type(self, simple_graph, token_counter, mock_llm_call):
+    def test_insights_are_architectural_insight_type(
+        self, simple_graph, token_counter, mock_llm_call
+    ):
         communities = CommunityDetector().detect(simple_graph)
         agent = GraphAnalystAgent(token_counter, llm_call=mock_llm_call)
         insights = agent.run(simple_graph, communities)

@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-import pytest
-
+from graph_rev_eng.constants import EDGE_TYPE_EXTRACTED
 from graph_rev_eng.services.agents.bug_detector import (
     ArchitecturalBugDetector,
-    ArchitecturalBug,
     BugSeverity,
 )
-from graph_rev_eng.services.community_detector import CommunityDetector, Community
+from graph_rev_eng.services.community_detector import Community, CommunityDetector
 from graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode
-from graph_rev_eng.services.token_counter import TokenCounter
-from graph_rev_eng.constants import EDGE_TYPE_EXTRACTED, EDGE_TYPE_INFERRED
 
 
 class TestArchitecturalBugDetector:

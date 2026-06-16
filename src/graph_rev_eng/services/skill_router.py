@@ -30,7 +30,7 @@ import yaml  # pyyaml
 logger = logging.getLogger(__name__)
 
 SKILLS_DIR = Path("skills")
-MIN_MATCH_SCORE = 1   # At least one trigger word must match
+MIN_MATCH_SCORE = 1  # At least one trigger word must match
 
 
 @dataclass
@@ -50,7 +50,7 @@ class RoutingResult:
     """Result of a SkillRouter.route() call."""
 
     skill: Skill | None
-    confidence: float   # 0.0 – 1.0
+    confidence: float  # 0.0 – 1.0
     matched_triggers: list[str]
 
 
@@ -96,7 +96,12 @@ class SkillRouter:
 
         total_triggers = sum(len(s.triggers) for s in skills)
         confidence = min(1.0, best_score / max(total_triggers, 1))
-        logger.info("Routed to skill '%s' (score=%d, confidence=%.2f)", best_skill.name, best_score, confidence)
+        logger.info(
+            "Routed to skill '%s' (score=%d, confidence=%.2f)",
+            best_skill.name,
+            best_score,
+            confidence,
+        )
         return RoutingResult(skill=best_skill, confidence=confidence, matched_triggers=best_matched)
 
     def list_skills(self) -> list[Skill]:

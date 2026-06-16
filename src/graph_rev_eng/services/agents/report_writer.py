@@ -10,16 +10,17 @@ human-readable deliverable of the pipeline.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
 
-from ..graph_models import Graph
 from ..community_detector import Community
+from ..graph_models import Graph
 from ..token_counter import TokenCounter, TokenUsage
-from .graph_analyst import ArchitecturalInsight
-from .code_inspector import InspectionResult, ValidationOutcome
+from .base import BaseAgent, LLMStubMixin
 from .bug_detector import ArchitecturalBug, BugSeverity
+from .code_inspector import InspectionResult
+from .graph_analyst import ArchitecturalInsight
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ AGENT_NAME = "ReportWriterAgent"
 LLMCallable = Callable[[str], str]
 
 
-class ReportWriterAgent:
+class ReportWriterAgent(BaseAgent, LLMStubMixin):
     """
     Synthesises insights, inspection results, and bug findings into a report.
 
@@ -46,30 +47,51 @@ class ReportWriterAgent:
         token_counter: TokenCounter,
         llm_call: LLMCallable | None = None,
     ) -> None:
+        super().__init__(token_counter, 2000)
         self._output_path = output_path
-        self._counter = token_counter
         self._llm_call = llm_call or self._default_llm_stub
 
-    def run(
+    def setup(
         self,
         graph: Graph,
         communities: list[Community],
         insights: list[ArchitecturalInsight],
         inspection_results: list[InspectionResult],
         bugs: list[ArchitecturalBug],
-    ) -> Path:
-        """
-        Generates the final report and writes it to output_path.
+    ) -> tuple[
+        Graph,
+        list[Community],
+        list[ArchitecturalInsight],
+        list[InspectionResult],
+        list[ArchitecturalBug],
+    ]:
+        """Prepares all input data for report generation."""
+        return graph, communities, insights, inspection_results, bugs
 
-        Returns the path to the written report.
-        """
+    def process(
+        self,
+        data: tuple[
+            Graph,
+            list[Community],
+            list[ArchitecturalInsight],
+            list[InspectionResult],
+            list[ArchitecturalBug],
+        ],
+    ) -> str:
+        """Generates the executive summary via LLM and builds the full markdown report."""
+        graph, communities, insights, inspection_results, bugs = data
         prompt = f"Summarise findings: {len(insights)} insights, {len(bugs)} bugs."
         t_in = self._counter.estimate_tokens(prompt)
         summary_text = self._llm_call(prompt)
         t_out = self._counter.estimate_tokens(summary_text)
         self._counter.record(TokenUsage(AGENT_NAME, t_in, t_out))
 
-        report = self._build_report(graph, communities, insights, inspection_results, bugs, summary_text)
+        return self._build_report(
+            graph, communities, insights, inspection_results, bugs, summary_text
+        )
+
+    def format_output(self, report: str) -> Path:
+        """Writes the generated report to disk and returns the Path."""
         self._output_path.parent.mkdir(parents=True, exist_ok=True)
         self._output_path.write_text(report, encoding="utf-8")
         logger.info("Report written to %s (%d chars)", self._output_path, len(report))
@@ -87,7 +109,7 @@ class ReportWriterAgent:
         """Assembles the full markdown report string."""
         ts = datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
         sections = [
-            f"# Architectural Reverse Engineering Report\n",
+            "# Architectural Reverse Engineering Report\n",
             f"_Generated: {ts}_\n\n",
             f"## 1. Executive Summary\n\n{summary_text}\n\n",
             self._insights_section(insights),
@@ -115,14 +137,17 @@ class ReportWriterAgent:
         lines.append("| Insight | Outcome | Evidence |\n")
         lines.append("|---------|---------|----------|\n")
         for result in results:
-            lines.append(
-                f"| {result.insight_title} | {result.outcome} | {result.evidence} |\n"
-            )
+            lines.append(f"| {result.insight_title} | {result.outcome} | {result.evidence} |\n")
         return "".join(lines)
 
     def _bugs_section(self, bugs: list[ArchitecturalBug]) -> str:
         """Formats the architectural issues section, sorted by severity."""
-        severity_order = [BugSeverity.CRITICAL, BugSeverity.HIGH, BugSeverity.MEDIUM, BugSeverity.LOW]
+        severity_order = [
+            BugSeverity.CRITICAL,
+            BugSeverity.HIGH,
+            BugSeverity.MEDIUM,
+            BugSeverity.LOW,
+        ]
         sorted_bugs = sorted(bugs, key=lambda b: severity_order.index(b.severity))
         lines = ["\n## 4. Architectural Issues\n\n"]
         for bug in sorted_bugs:
@@ -163,7 +188,3 @@ class ReportWriterAgent:
         for rec in unique_recs:
             lines.append(f"- {rec}\n")
         return "\n".join(lines)
-
-    def _default_llm_stub(self, prompt: str) -> str:
-        """Deterministic stub for test environments."""
-        return "[STUB] Executive summary pending LLM configuration."

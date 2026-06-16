@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from graph_rev_eng.services.context_budget import ContextBudgetManager
 from graph_rev_eng.services.token_counter import TokenCounter
 
@@ -39,7 +37,9 @@ class TestContextBudgetManager:
 
     def test_dropping_skill_when_budget_small(self, tmp_path: Path):
         manager = _make_manager(tmp_path, budget=10)
-        many_skills = [f"skill_{i} — very long skill description that takes many tokens" for i in range(20)]
+        many_skills = [
+            f"skill_{i} — very long skill description that takes many tokens" for i in range(20)
+        ]
         result = manager.assemble("query", many_skills)
         assert len(result.dropped_skills) > 0
 

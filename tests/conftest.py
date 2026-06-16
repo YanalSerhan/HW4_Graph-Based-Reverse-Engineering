@@ -9,22 +9,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
-from graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode, Hyperedge
-from graph_rev_eng.services.token_counter import TokenCounter
 from graph_rev_eng.constants import (
+    EDGE_TYPE_AMBIGUOUS,
     EDGE_TYPE_EXTRACTED,
     EDGE_TYPE_INFERRED,
-    EDGE_TYPE_AMBIGUOUS,
 )
-
+from graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode
+from graph_rev_eng.services.token_counter import TokenCounter
 
 # ---------------------------------------------------------------------------
 # Mock graph fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def simple_graph() -> Graph:
@@ -48,11 +47,9 @@ def hub_graph() -> Graph:
     """A graph with a high-degree hub node (n_hub connects to 8 others)."""
     nodes = {f"n{i}": GraphNode(f"n{i}", f"mod_{i}", "module", f"src/mod_{i}.py") for i in range(9)}
     nodes["n_hub"] = GraphNode("n_hub", "hub_module", "module", "src/hub.py")
-    edges = [
-        GraphEdge("n_hub", f"n{i}", EDGE_TYPE_EXTRACTED) for i in range(8)
-    ]
+    edges = [GraphEdge("n_hub", f"n{i}", EDGE_TYPE_EXTRACTED) for i in range(8)]
     # Add some cross-community-like edges
-    edges += [GraphEdge(f"n{i}", f"n{i+1}", EDGE_TYPE_EXTRACTED) for i in range(4)]
+    edges += [GraphEdge(f"n{i}", f"n{i + 1}", EDGE_TYPE_EXTRACTED) for i in range(4)]
     return Graph(nodes=nodes, edges=edges)
 
 
@@ -82,8 +79,12 @@ def graph_json_file(tmp_path: Path, simple_graph: Graph) -> Path:
             for nid, n in simple_graph.nodes.items()
         ],
         "edges": [
-            {"source": e.source_id, "target": e.target_id, "type": e.edge_type,
-             "confidence": e.confidence}
+            {
+                "source": e.source_id,
+                "target": e.target_id,
+                "type": e.edge_type,
+                "confidence": e.confidence,
+            }
             for e in simple_graph.edges
         ],
         "hyperedges": [],
@@ -98,11 +99,14 @@ def graph_json_file(tmp_path: Path, simple_graph: Graph) -> Path:
 # LLM / API mock fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def mock_llm_call():
     """Deterministic LLM stub that returns a predictable string."""
+
     def _stub(prompt: str) -> str:
         return f"[MOCK RESPONSE] {len(prompt)} chars"
+
     return _stub
 
 
@@ -115,6 +119,7 @@ def token_counter() -> TokenCounter:
 # ---------------------------------------------------------------------------
 # Filesystem fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def mock_repo_path(tmp_path: Path) -> Path:
