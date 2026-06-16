@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable
 
 from ..graph_models import Graph
@@ -65,27 +66,45 @@ class GraphAnalystAgent:
         self._llm_call = llm_call or self._default_llm_stub
         self._budget = token_budget
 
-    def run(self, graph: Graph, communities: list[Community]) -> list[ArchitecturalInsight]:
+    def run(
+        self, 
+        graph: Graph, 
+        communities: list[Community],
+        graph_html_path: Path | None = None,
+        graph_report_path: Path | None = None,
+    ) -> list[ArchitecturalInsight]:
         """
         Executes the five-step pipeline and returns extracted insights.
-
-        Each graph community generates at least one insight; high-degree nodes
-        generate additional individual insights.
+        Implements the three-source reading protocol using graph.json (Graph), 
+        graph.html, and GRAPH_REPORT.md.
         """
+        html_content = ""
+        report_content = ""
+        
+        if graph_html_path and graph_html_path.exists():
+            html_content = graph_html_path.read_text(encoding="utf-8", errors="replace")[:1000]
+            
+        if graph_report_path and graph_report_path.exists():
+            report_content = graph_report_path.read_text(encoding="utf-8", errors="replace")[:2000]
+
         insights: list[ArchitecturalInsight] = []
-        insights.extend(self._analyse_communities(graph, communities))
-        insights.extend(self._analyse_hubs(graph))
+        insights.extend(self._analyse_communities(graph, communities, html_content, report_content))
+        insights.extend(self._analyse_hubs(graph, html_content, report_content))
         insights.extend(self._analyse_ambiguous_edges(graph))
         logger.info("%s produced %d insights.", AGENT_NAME, len(insights))
         return insights
 
     def _analyse_communities(
-        self, graph: Graph, communities: list[Community]
+        self, 
+        graph: Graph, 
+        communities: list[Community],
+        html_content: str = "",
+        report_content: str = "",
     ) -> list[ArchitecturalInsight]:
         """Generates one insight per detected community."""
         results: list[ArchitecturalInsight] = []
         for community in communities:
-            prompt = self._community_prompt(graph, community)
+            prompt = self._community_prompt(graph, community, html_content, report_content)
             tokens_in = self._counter.estimate_tokens(prompt)
             response = self._llm_call(prompt)
             tokens_out = self._counter.estimate_tokens(response)
@@ -103,12 +122,21 @@ class GraphAnalystAgent:
             )
         return results
 
-    def _analyse_hubs(self, graph: Graph) -> list[ArchitecturalInsight]:
+    def _analyse_hubs(
+        self, 
+        graph: Graph,
+        html_content: str = "",
+        report_content: str = "",
+    ) -> list[ArchitecturalInsight]:
         """Generates insights for nodes with degree ≥ 5 (architectural hubs)."""
         results: list[ArchitecturalInsight] = []
         hub_nodes = [n for n in graph.nodes.values() if graph.degree(n.node_id) >= 5]
         for node in hub_nodes[:10]:  # cap at 10 to respect budget
-            prompt = f"Analyse hub node '{node.label}' (degree={graph.degree(node.node_id)})."
+            prompt = (
+                f"Analyse hub node '{node.label}' (degree={graph.degree(node.node_id)}).\n"
+            )
+            if report_content:
+                prompt += f"Consider this narrative context:\n{report_content[:500]}\n"
             tokens_in = self._counter.estimate_tokens(prompt)
             response = self._llm_call(prompt)
             tokens_out = self._counter.estimate_tokens(response)
@@ -141,19 +169,31 @@ class GraphAnalystAgent:
             )
         ]
 
-    def _community_prompt(self, graph: Graph, community: Community) -> str:
+    def _community_prompt(
+        self, 
+        graph: Graph, 
+        community: Community,
+        html_content: str = "",
+        report_content: str = "",
+    ) -> str:
         """Builds the LLM prompt for community analysis."""
         node_labels = [
             graph.nodes[nid].label for nid in community.node_ids[:10] if nid in graph.nodes
         ]
-        return (
+        prompt = (
             f"You are a software architect. Analyse this code community:\n"
             f"Name: {community.dominant_label}\n"
             f"Size: {community.size} nodes\n"
             f"Cohesion: {community.cohesion_ratio:.0%}\n"
             f"Key nodes: {', '.join(node_labels)}\n"
-            "What is the dominant architectural responsibility of this community?"
         )
+        if report_content:
+            prompt += f"\nNarrative Report Context:\n{report_content[:500]}\n"
+        if html_content:
+            prompt += f"\nGraph HTML Metadata (excerpt):\n{html_content[:200]}\n"
+            
+        prompt += "\nWhat is the dominant architectural responsibility of this community?"
+        return prompt
 
     def _default_llm_stub(self, prompt: str) -> str:
         """

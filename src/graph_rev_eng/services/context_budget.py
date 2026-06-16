@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 
 from ..constants import DEFAULT_TOKEN_BUDGET
@@ -26,6 +27,14 @@ logger = logging.getLogger(__name__)
 
 SKILL_LISTING_FRACTION = 0.15   # 15% of budget reserved for skill listing
 COMPACT_TRIGGER_RATIO = 0.80    # Trigger /compact when 80% of budget consumed
+
+
+class FailureMode(str, Enum):
+    """Failure modes for context assembly."""
+
+    NONE = "NONE"
+    OVERFLOW = "OVERFLOW"
+    CONTEXT_ROT = "CONTEXT_ROT"
 
 
 @dataclass
@@ -92,7 +101,14 @@ class ContextBudgetManager:
             content, tokens = self._compact(content, query)
 
         self._session_consumed += tokens
-        logger.info("Context assembled: %d tokens (budget %d)", tokens, self._budget)
+        failure_mode = self.detect_failure_mode(tokens)
+        
+        if failure_mode == FailureMode.OVERFLOW:
+            logger.error("Context OVERFLOW detected: %d tokens exceeds budget %d", tokens, self._budget)
+        elif failure_mode == FailureMode.CONTEXT_ROT:
+            logger.warning("Context ROT detected: session consumed %d, triggering frequent compactions", self._session_consumed)
+        else:
+            logger.info("Context assembled: %d tokens (budget %d)", tokens, self._budget)
 
         return AssembledContext(
             content=content,
@@ -105,6 +121,21 @@ class ContextBudgetManager:
     def should_compact(self) -> bool:
         """Returns True when session consumption exceeds the compact trigger."""
         return self._session_consumed > self._budget * COMPACT_TRIGGER_RATIO
+
+    def detect_failure_mode(self, last_assembly_tokens: int) -> FailureMode:
+        """
+        Detects the current health state of the context budget.
+        
+        Returns OVERFLOW if the last assembly exceeded the hard limit.
+        Returns CONTEXT_ROT if the session is experiencing gradual decay (indicated by
+        frequent compaction triggers).
+        Otherwise returns NONE.
+        """
+        if last_assembly_tokens > self._budget:
+            return FailureMode.OVERFLOW
+        if self.should_compact():
+            return FailureMode.CONTEXT_ROT
+        return FailureMode.NONE
 
     def reset_session(self) -> None:
         """Resets session consumption counter — call between agent runs."""

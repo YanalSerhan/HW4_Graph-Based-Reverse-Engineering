@@ -86,13 +86,17 @@ def main() -> None:
 
     if args.repo_url or args.graph_path:
         graph_path = Path(args.graph_path) if args.graph_path else None
+        graph_html_path = None
+        graph_report_path = None
         if args.repo_url and not graph_path:
-            graph_path = sdk.run_grphify(args.repo_url)
+            graph_path, graph_html_path, graph_report_path = sdk.run_grphify(args.repo_url)
 
         pipeline_result = sdk.run_agents(
             task="full-analysis",
             github_url=args.repo_url,
             graph_path=graph_path,
+            graph_html_path=graph_html_path,
+            graph_report_path=graph_report_path,
             report_path=output_dir / "final_report.md",
         )
         print(json.dumps(pipeline_result.token_summary, indent=2))

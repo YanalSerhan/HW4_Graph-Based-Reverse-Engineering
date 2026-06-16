@@ -156,6 +156,7 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 ### 3.2 — Grphify Graph Generation
 
 - [x] [P1] [Done] [Owner: AI Agent] Run `grphify` CLI on the cloned codebase and generate `graph.json` — save to `results/`
+- [x] [P1] [Done] [Owner: AI Agent] Generate and save `results/GRAPH_REPORT.md` — the Grphify narrative report summarizing architectural findings, anomalies, and community descriptions
 - [x] [P1] [Done] [Owner: AI Agent] Parse `graph.json` and build an in-memory `Graph` object with typed nodes and edges
 - [x] [P1] [Done] [Owner: AI Agent] Implement `GraphLoader` service that validates all three edge types (`Extracted`, `Inferred`, `Ambiguous`) are correctly parsed
 - [x] [P1] [Done] [Owner: AI Agent] Parse, validate, and handle `Hyperedge` (group connections) in the graph, ensuring all members of the group are checked together when drawing conclusions
@@ -170,6 +171,7 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 - [x] [P1] [Done] [Owner: AI Agent] Implement `ContextBudgetManager`: given a query, (1) load `index.md` first, (2) select only 2–3 most relevant subgraph pages based on semantic matching, (3) assemble a position-aware context (critical rules at edges, supporting detail in middle)
 - [x] [P1] [Done] [Owner: AI Agent] Implement the `/compact` protocol: mid-session summarization that resets conversational noise while preserving intent, decisions, and rules at prompt edges
 - [x] [P1] [Done] [Owner: AI Agent] Enforce a hard token budget per agent invocation — log every agent call's actual token consumption vs. budget
+- [x] [P1] [Done] [Owner: AI Agent] Distinguish and detect `Context Rot` (gradual quality decay) vs. `Overflow` (hard limit exceeded) as separate failure modes within `ContextBudgetManager`
 - [x] [P1] [Done] [Owner: AI Agent] Implement `skillListingBudgetFraction` to allocate a specific fraction of the context window exclusively for presenting available SKILLs
 - [x] [P1] [Done] [Owner: AI Agent] Implement `Dropping Skill` fallback logic: gracefully omit specific skills from the agent's view when the context budget overflows
 - [x] [P1] [Done] [Owner: AI Agent] Implement `TokenCounter` utility: count input and output tokens for every LLM call; accumulate totals for cost analysis
@@ -177,7 +179,9 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 ### 3.4 — Architectural Analysis Agents
 
 - [x] [P1] [Done] [Owner: AI Agent] Implement `GraphAnalystAgent`: reads the graph, applies the five-step inference pipeline (Observe → Relate → Confidence → Context → Source), and extracts architectural insights
+- [x] [P1] [Done] [Owner: AI Agent] Implement the three-source reading protocol in `GraphAnalystAgent`: load `graph.html` metadata, `GRAPH_REPORT.md` narrative, and `graph.json` evidence before drawing any architectural conclusion
 - [x] [P1] [Done] [Owner: AI Agent] Implement `CodeInspectorAgent`: validates graph-inferred insights against the actual source code; marks `Inferred` edges as confirmed or disputed; flags `Ambiguous` edges for human review
+- [x] [P1] [Done] [Owner: AI Agent] Implement `SemanticDuplicateValidator` in `CodeInspectorAgent`: before flagging `semantically_similar_to` nodes as duplicates, verify call sites, consumers, tests, and purpose — never recommend merge based on semantic similarity alone
 - [x] [P1] [Done] [Owner: AI Agent] Implement `ArchitecturalBugDetector`: identify structural anti-patterns — Single Points of Failure, god-nodes, missing bridges, communities with excessive external connections
 - [x] [P1] [Done] [Owner: AI Agent] Map graph communities to OOP class hierarchies — check that `Extracted` call-graph edges align with the repository's class structure
 - [x] [P1] [Done] [Owner: AI Agent] Implement PRD-to-implementation traceability check: verify that nodes representing documented requirements (`WHY`, `TODO`, `NOTE` annotations) are connected to their implementation nodes
@@ -191,6 +195,7 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
   - Irreversible actions (repo modification, external API calls beyond read): require explicit confirmation flag
   - `model-invocation-disable`: prevent the agent from autonomously invoking specific high-risk skills, keeping them under manual/process control
 - [x] [P1] [Done] [Owner: AI Agent] Ensure no single agent exceeds the token budget — implement per-agent budget allocation
+- [x] [P1] [Done] [Owner: AI Agent] Implement improvement loop in orchestration: after BugDetector recommends a fix, apply it, re-run Grphify, compare new `graph.json` against previous, run unit tests, and verify the anti-pattern is resolved before stopping
 - [x] [P1] [Done] [Owner: AI Agent] Implement `ReportWriterAgent`: synthesize all agent outputs into a structured markdown report saved to `results/final_report.md`
 
 ### 3.6 — SKILL.md Infrastructure

@@ -103,6 +103,9 @@ class CodeInspectorAgent:
         if edge.edge_type == EDGE_TYPE_AMBIGUOUS:
             return ValidationOutcome.ESCALATED
 
+        if edge.label == "semantically_similar_to":
+            return self._validate_semantic_duplicate(edge, graph)
+
         source_node = graph.get_node(edge.source_id)
         target_node = graph.get_node(edge.target_id)
         if not source_node or not target_node:
@@ -177,6 +180,29 @@ class CodeInspectorAgent:
                 if name == target_label:
                     return True
         return False
+
+    def _validate_semantic_duplicate(self, edge: GraphEdge, graph: Graph) -> ValidationOutcome:
+        """
+        Validates whether semantically similar nodes are actually duplicates.
+        
+        Before flagging as duplicates, verify call sites, consumers, tests, and purpose.
+        Never recommend merge based on semantic similarity alone.
+        """
+        source_node = graph.get_node(edge.source_id)
+        target_node = graph.get_node(edge.target_id)
+        if not source_node or not target_node:
+            return ValidationOutcome.SKIPPED
+
+        # Mock check: in reality, we'd use AST to find if they share the same consumers
+        # or if they are covered by different tests indicating different purposes.
+        # For now, we defensively return DISPUTED to prevent accidental merges
+        # based purely on semantic similarity.
+        logger.info(
+            "SemanticDuplicateValidator: Node '%s' and '%s' are semantically similar. "
+            "Defensively disputing merge until call sites and tests are verified.",
+            source_node.label, target_node.label
+        )
+        return ValidationOutcome.DISPUTED
 
     def _default_llm_stub(self, prompt: str) -> str:
         """Deterministic stub for test environments without LLM access."""

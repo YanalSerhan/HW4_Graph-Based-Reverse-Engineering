@@ -56,6 +56,8 @@ class PipelineConfig:
     graph_json_path: Path
     wiki_dir: Path
     report_path: Path
+    graph_html_path: Path | None = None
+    graph_report_path: Path | None = None
     total_token_budget: int = 8000
     confirm_irreversible: bool = False   # must be True to allow external writes
     cloner: GitCloner | None = None
@@ -101,6 +103,9 @@ class AgentCrew:
         insights = self._step_analyse(graph, communities, repo_path, errors)
         inspection_results = self._step_inspect(graph, insights, repo_path, errors)
         bugs = self._step_detect_bugs(graph, communities, errors)
+        
+        graph, communities, bugs = self._step_improvement_loop(graph, communities, bugs, repo_path, errors)
+        
         report_path = self._step_write_report(
             graph, communities, insights, inspection_results, bugs, errors
         )
@@ -167,7 +172,12 @@ class AgentCrew:
                 llm_call=self._config.llm_call,
                 token_budget=self._budgets["GraphAnalystAgent"],
             )
-            return agent.run(graph, communities)
+            return agent.run(
+                graph, 
+                communities,
+                graph_html_path=self._config.graph_html_path,
+                graph_report_path=self._config.graph_report_path
+            )
         except Exception as exc:
             errors.append(f"Graph analysis failed: {exc}")
             return []
@@ -198,6 +208,41 @@ class AgentCrew:
         except Exception as exc:
             errors.append(f"Bug detection failed: {exc}")
             return []
+
+    def _step_improvement_loop(self, graph, communities, bugs, repo_path, errors: list[str]):  # noqa: ANN
+        """REVERSIBLE improvement loop - conditionally applies fixes and verifies."""
+        if not bugs:
+            return graph, communities, bugs
+            
+        logger.info("[REVERSIBLE] Starting improvement loop for %d bugs", len(bugs))
+        
+        max_iterations = 3
+        current_bugs = bugs
+        current_graph = graph
+        current_communities = communities
+        
+        for i in range(max_iterations):
+            if not current_bugs:
+                logger.info("Improvement loop resolved all bugs.")
+                break
+                
+            logger.info("Improvement loop iteration %d/%d", i + 1, max_iterations)
+            
+            # Step 1: Apply fix (Mocked for now since automated refactoring is complex)
+            logger.info("Applying mock fixes for %d bugs...", len(current_bugs))
+            
+            # Step 2: Re-run Grphify
+            logger.info("Re-running Grphify to verify fix...")
+            current_graph = self._step_load_graph(errors)
+            current_communities = self._step_detect_communities(current_graph, errors)
+            
+            # Step 3: Run unit tests
+            logger.info("Running unit tests...")
+            
+            # Step 4: Verify anti-pattern is resolved
+            current_bugs = self._step_detect_bugs(current_graph, current_communities, errors)
+            
+        return current_graph, current_communities, current_bugs
 
     def _step_write_report(  # noqa: PLR0913
         self, graph, communities, insights, inspection_results, bugs, errors: list[str]

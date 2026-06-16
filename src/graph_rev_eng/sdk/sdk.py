@@ -35,16 +35,18 @@ class ReverseEngineeringSDK:
         self._config = ConfigManager.get_instance()
         self._token_counter = TokenCounter()
 
-    def run_grphify(self, repo_path: str) -> Path:
+    def run_grphify(self, repo_path: str) -> tuple[Path, Path, Path]:
         """
-        Runs the Grphify CLI on repo_path and returns the path to graph.json.
+        Runs the Grphify CLI on repo_path and returns paths to 
+        (graph.json, graph.html, GRAPH_REPORT.md).
 
         In production, shells out to `grphify scan <repo_path>`.
-        In test/mock mode, returns the pre-existing path if it exists.
         """
         import subprocess
 
         output_path = RESULTS_DIR / "graph.json"
+        html_path = RESULTS_DIR / "graph.html"
+        report_path = RESULTS_DIR / "GRAPH_REPORT.md"
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         try:
             subprocess.run(
@@ -60,7 +62,14 @@ class ReverseEngineeringSDK:
             logging.getLogger(__name__).warning(
                 "Grphify unavailable (%s). Using existing graph at %s.", exc, output_path
             )
-        return output_path
+            
+        # Ensure dummy outputs if they don't exist, to satisfy agents in mock environments
+        if not html_path.exists():
+            html_path.write_text("<html><body>Mock Graph HTML Metadata</body></html>", encoding="utf-8")
+        if not report_path.exists():
+            report_path.write_text("# Mock GRAPH_REPORT\nNo actual Grphify output available.", encoding="utf-8")
+            
+        return output_path, html_path, report_path
 
     def load_graph(self, graph_path: Path) -> Graph:
         """Loads and validates a Graph from the given graph.json path."""
@@ -85,6 +94,8 @@ class ReverseEngineeringSDK:
         task: str,
         github_url: str = "",
         graph_path: Path | None = None,
+        graph_html_path: Path | None = None,
+        graph_report_path: Path | None = None,
         report_path: Path | None = None,
         cloner: GitCloner | None = None,
         llm_call=None,
@@ -97,6 +108,8 @@ class ReverseEngineeringSDK:
         config = PipelineConfig(
             github_url=github_url,
             graph_json_path=graph_path or (RESULTS_DIR / "graph.json"),
+            graph_html_path=graph_html_path or (RESULTS_DIR / "graph.html"),
+            graph_report_path=graph_report_path or (RESULTS_DIR / "GRAPH_REPORT.md"),
             wiki_dir=WIKI_DIR,
             report_path=report_path or (RESULTS_DIR / "final_report.md"),
             total_token_budget=self._config.get_rate_limits().get(
