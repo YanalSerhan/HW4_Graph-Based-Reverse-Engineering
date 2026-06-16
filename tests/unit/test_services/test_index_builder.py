@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.graph_rev_eng.services.index_builder import IndexBuilder
-from src.graph_rev_eng.services.community_detector import CommunityDetector
+from graph_rev_eng.services.index_builder import IndexBuilder
+from graph_rev_eng.services.community_detector import CommunityDetector
 
 
 class TestIndexBuilder:

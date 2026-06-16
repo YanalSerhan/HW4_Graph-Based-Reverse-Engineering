@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src.graph_rev_eng.services.crew import AgentCrew, PipelineConfig, PipelineResult
+from graph_rev_eng.services.crew import AgentCrew, PipelineConfig, PipelineResult
 
 
 class MockCloner:
@@ -69,12 +69,12 @@ class TestAgentCrew:
         assert len(result.errors) > 0
 
     def test_budget_fractions_sum_to_one_or_less(self):
-        from src.graph_rev_eng.services.crew import BUDGET_FRACTIONS
+        from graph_rev_eng.services.crew import BUDGET_FRACTIONS
         assert sum(BUDGET_FRACTIONS.values()) <= 1.0
 
     def test_register_disabled_skill(self, tmp_path: Path):
         config = _make_config(tmp_path)
         crew = AgentCrew(config)
         crew.register_disabled_skill("dangerous_skill")
-        from src.graph_rev_eng.services.crew import DISABLED_SKILLS
+        from graph_rev_eng.services.crew import DISABLED_SKILLS
         assert "dangerous_skill" in DISABLED_SKILLS

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.graph_rev_eng.services.token_counter import TokenCounter, TokenUsage
+from graph_rev_eng.services.token_counter import TokenCounter, TokenUsage
 
 
 class TestTokenUsage:

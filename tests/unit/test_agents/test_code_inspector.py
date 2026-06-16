@@ -6,16 +6,16 @@ from pathlib import Path
 
 import pytest
 
-from src.graph_rev_eng.services.agents.code_inspector import (
+from graph_rev_eng.services.agents.code_inspector import (
     CodeInspectorAgent,
     ValidationOutcome,
     InspectionResult,
 )
-from src.graph_rev_eng.services.agents.graph_analyst import ArchitecturalInsight
-from src.graph_rev_eng.services.community_detector import CommunityDetector
-from src.graph_rev_eng.services.graph_models import GraphEdge
-from src.graph_rev_eng.services.token_counter import TokenCounter
-from src.graph_rev_eng.constants import (
+from graph_rev_eng.services.agents.graph_analyst import ArchitecturalInsight
+from graph_rev_eng.services.community_detector import CommunityDetector
+from graph_rev_eng.services.graph_models import GraphEdge
+from graph_rev_eng.services.token_counter import TokenCounter
+from graph_rev_eng.constants import (
     EDGE_TYPE_EXTRACTED,
     EDGE_TYPE_INFERRED,
     EDGE_TYPE_AMBIGUOUS,
@@ -79,7 +79,7 @@ class TestCodeInspectorAgent:
         (repo / "src").mkdir()
         caller = repo / "src" / "module_a.py"
         caller.write_text("def foo():\n    module_b()\n", encoding="utf-8")
-        from src.graph_rev_eng.services.graph_models import GraphNode
+        from graph_rev_eng.services.graph_models import GraphNode
         simple_graph.nodes["n1"].file_path = "src/module_a.py"
         simple_graph.nodes["n2"].label = "module_b"
         edge = simple_graph.edges[0]  # n1 → n2, EXTRACTED

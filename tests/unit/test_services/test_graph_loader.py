@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from src.graph_rev_eng.services.graph_loader import GraphLoader, GraphValidationError
-from src.graph_rev_eng.constants import (
+from graph_rev_eng.services.graph_loader import GraphLoader, GraphValidationError
+from graph_rev_eng.constants import (
     EDGE_TYPE_EXTRACTED,
     EDGE_TYPE_INFERRED,
     EDGE_TYPE_AMBIGUOUS,

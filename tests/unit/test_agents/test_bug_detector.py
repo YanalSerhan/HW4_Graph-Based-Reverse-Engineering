@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from src.graph_rev_eng.services.agents.bug_detector import (
+from graph_rev_eng.services.agents.bug_detector import (
     ArchitecturalBugDetector,
     ArchitecturalBug,
     BugSeverity,
 )
-from src.graph_rev_eng.services.community_detector import CommunityDetector, Community
-from src.graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode
-from src.graph_rev_eng.services.token_counter import TokenCounter
-from src.graph_rev_eng.constants import EDGE_TYPE_EXTRACTED, EDGE_TYPE_INFERRED
+from graph_rev_eng.services.community_detector import CommunityDetector, Community
+from graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode
+from graph_rev_eng.services.token_counter import TokenCounter
+from graph_rev_eng.constants import EDGE_TYPE_EXTRACTED, EDGE_TYPE_INFERRED
 
 
 class TestArchitecturalBugDetector:

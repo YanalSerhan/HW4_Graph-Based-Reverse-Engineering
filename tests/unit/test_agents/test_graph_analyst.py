@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from src.graph_rev_eng.services.agents.graph_analyst import (
+from graph_rev_eng.services.agents.graph_analyst import (
     GraphAnalystAgent,
     ArchitecturalInsight,
 )
-from src.graph_rev_eng.services.community_detector import CommunityDetector
-from src.graph_rev_eng.services.token_counter import TokenCounter
-from src.graph_rev_eng.constants import EDGE_TYPE_AMBIGUOUS
+from graph_rev_eng.services.community_detector import CommunityDetector
+from graph_rev_eng.services.token_counter import TokenCounter
+from graph_rev_eng.constants import EDGE_TYPE_AMBIGUOUS
 
 
 class TestGraphAnalystAgent:

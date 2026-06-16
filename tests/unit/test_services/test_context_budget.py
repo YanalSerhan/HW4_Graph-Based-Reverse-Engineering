@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.graph_rev_eng.services.context_budget import ContextBudgetManager
-from src.graph_rev_eng.services.token_counter import TokenCounter
+from graph_rev_eng.services.context_budget import ContextBudgetManager
+from graph_rev_eng.services.token_counter import TokenCounter
 
 
 def _make_manager(tmp_path: Path, budget: int = 1000) -> ContextBudgetManager:

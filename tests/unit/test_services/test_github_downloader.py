@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.graph_rev_eng.services.github_downloader import (
+from graph_rev_eng.services.github_downloader import (
     GitHubDownloaderAgent,
     GitCloner,
 )

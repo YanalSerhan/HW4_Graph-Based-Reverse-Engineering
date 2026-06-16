@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from src.graph_rev_eng.services.hub_classifier import (
+from graph_rev_eng.services.hub_classifier import (
     HubVsBottleneckClassifier,
     NodeClassification,
     SPOF_MIN_DEGREE,
 )
-from src.graph_rev_eng.services.community_detector import CommunityDetector, Community
-from src.graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode
-from src.graph_rev_eng.constants import EDGE_TYPE_EXTRACTED
+from graph_rev_eng.services.community_detector import CommunityDetector, Community
+from graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode
+from graph_rev_eng.constants import EDGE_TYPE_EXTRACTED
 
 
 def _make_dense_hub_graph() -> tuple[Graph, list[Community]]:

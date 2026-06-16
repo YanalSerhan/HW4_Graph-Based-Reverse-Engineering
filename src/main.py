@@ -69,7 +69,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Late import keeps startup fast and avoids circular-import risks at module level
-    from src.graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
+    from graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
 
     sdk = ReverseEngineeringSDK()
     output_dir = Path(args.output_dir)

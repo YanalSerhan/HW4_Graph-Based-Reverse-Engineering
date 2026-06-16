@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from src.graph_rev_eng.services.skill_router import SkillRouter
+from graph_rev_eng.services.skill_router import SkillRouter
 
 
 SKILL_CONTENT = """\
