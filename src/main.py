@@ -89,7 +89,10 @@ def main() -> None:
         graph_html_path = None
         graph_report_path = None
         if args.repo_url and not graph_path:
-            graph_path, graph_html_path, graph_report_path = sdk.run_grphify(args.repo_url)
+            from graph_rev_eng.services.github_downloader import GitHubDownloaderAgent
+            agent = GitHubDownloaderAgent()
+            local_repo_path = agent.run(args.repo_url)
+            graph_path, graph_html_path, graph_report_path = sdk.run_grphify(str(local_repo_path))
 
         pipeline_result = sdk.run_agents(
             task="full-analysis",

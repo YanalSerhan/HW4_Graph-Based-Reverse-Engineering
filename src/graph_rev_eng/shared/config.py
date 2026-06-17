@@ -7,8 +7,12 @@ import logging.config
 import os
 from pathlib import Path
 from typing import Any
+from dotenv import load_dotenv
 
 from .version import check_config_version
+
+# Load environment variables from .env if present
+load_dotenv()
 
 CONFIG_DIR = Path(__file__).parent.parent.parent.parent / "config"
 

@@ -294,7 +294,7 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 6.3 — Visualization Artifacts (Mandatory)
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Generate and save `results/graph.json` and `results/graph.html` (interactive graph via Grphify or D3.js/Plotly)
+- [x] [P1] [Done] [Owner: AI Agent] Generate and save `results/graph.json` and `results/graph.html` (interactive graph via Grphify or D3.js/Plotly)
 - [ ] [P1] [Not Started] [Owner: AI Agent] Produce a **Community Map** visualization: color-coded communities, hub size proportional to centrality, bridge edges highlighted
 - [ ] [P1] [Not Started] [Owner: AI Agent] Produce a **Bar chart**: top 10 nodes by centrality score
 - [ ] [P1] [Not Started] [Owner: AI Agent] Produce a **Heatmap**: community-to-community dependency matrix (who depends on whom)
@@ -316,7 +316,7 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 7.1 — CLI Interface
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement a `src/main.py` CLI using `argparse` or `click` that exposes: `--repo-url`, `--query`, `--budget-tokens`, `--output-dir`, `--compact` (trigger mid-session compaction)
+- [x] [P1] [Done] [Owner: AI Agent] Implement a `src/main.py` CLI using `argparse` or `click` that exposes: `--repo-url`, `--query`, `--budget-tokens`, `--output-dir`, `--compact` (trigger mid-session compaction)
 - [ ] [P1] [Not Started] [Owner: AI Agent] Document all CLI flags, their defaults, and example workflows in `README.md`
 - [ ] [P1] [Not Started] [Owner: AI Agent] Apply Nielsen's 10 usability heuristics at the CLI level: clear error messages, graceful degradation on failure, confirmation before irreversible actions
 - [ ] [P1] [Not Started] [Owner: AI Agent] Save a screenshot (or `asciinema` recording) of a full CLI session to `assets/`

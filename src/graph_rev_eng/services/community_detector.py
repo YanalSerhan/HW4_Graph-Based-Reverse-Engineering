@@ -58,9 +58,17 @@ class CommunityDetector:
         """
         parent = self._build_union_find(graph)
         groups = self._group_by_root(graph, parent)
+        
+        # Group node_ids by dominant_label to merge communities
+        label_to_nodes: dict[str, list[str]] = defaultdict(list)
+        for node_ids in groups.values():
+            label = self._dominant_label(node_ids, graph)
+            label_to_nodes[label].extend(node_ids)
+            
         communities = []
-        for cid, node_ids in enumerate(groups.values()):
+        for cid, (label, node_ids) in enumerate(label_to_nodes.items()):
             community = self._build_community(cid, node_ids, graph)
+            community.dominant_label = label
             communities.append(community)
             for nid in node_ids:
                 if nid in graph.nodes:

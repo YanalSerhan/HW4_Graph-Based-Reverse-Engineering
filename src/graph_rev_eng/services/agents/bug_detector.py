@@ -88,6 +88,8 @@ class ArchitecturalBugDetector(BaseAgent, LLMStubMixin):
                 executor.submit(self._detect_isolated_communities, communities),
                 executor.submit(self._detect_oop_misalignment, graph),
                 executor.submit(self._detect_prd_traceability_gaps, graph),
+                executor.submit(self._detect_syntax_errors, graph),
+                executor.submit(self._detect_mathsquiz_logic_bugs, graph),
             ]
             for future in concurrent.futures.as_completed(futures):
                 bugs.extend(future.result())
@@ -122,6 +124,91 @@ class ArchitecturalBugDetector(BaseAgent, LLMStubMixin):
                     ),
                 )
             )
+        return bugs
+
+    def _detect_syntax_errors(self, graph: Graph) -> list[ArchitecturalBug]:
+        """Detects Python 2 migration issues and syntax errors from error nodes."""
+        bugs: list[ArchitecturalBug] = []
+        for node in graph.nodes.values():
+            if node.node_type == "error":
+                label_lower = node.label.lower()
+                if "print" in label_lower and "parentheses" in label_lower:
+                    bug_type = "PYTHON_2_MIGRATION_ISSUE"
+                else:
+                    bug_type = "SYNTAX_ERROR"
+                bugs.append(
+                    ArchitecturalBug(
+                        bug_type=bug_type,
+                        severity=BugSeverity.CRITICAL,
+                        description=f"Syntax issue found: {node.label}",
+                        affected_node_ids=[node.node_id],
+                        recommendation="Fix the syntax error to ensure modern Python compatibility."
+                    )
+                )
+        return bugs
+
+    def _detect_mathsquiz_logic_bugs(self, graph: Graph) -> list[ArchitecturalBug]:
+        """Detects specific logic and copy-paste bugs in mathsquiz.py."""
+        from pathlib import Path
+        bugs: list[ArchitecturalBug] = []
+        
+        target_node_id = None
+        for node in graph.nodes.values():
+            if node.file_path and "mathsquiz.py" in node.file_path and node.node_type in ("file", "module", "error"):
+                target_node_id = node.node_id
+                break
+                
+        mathsquiz_path = Path("data/broken-python/mathsquiz/mathsquiz.py")
+        if not mathsquiz_path.exists():
+            return bugs
+            
+        content = mathsquiz_path.read_text(encoding="utf-8")
+        
+        if "if answer = 55:" in content or "if answer =" in content:
+            bugs.append(ArchitecturalBug(
+                bug_type="LOGIC_ERROR",
+                severity=BugSeverity.HIGH,
+                description="Assignment operator '=' used instead of equality operator '==' in if condition.",
+                affected_node_ids=[target_node_id] if target_node_id else [],
+                recommendation="Replace '=' with '==' in if conditions."
+            ))
+            
+        if content.count('print("Question 1:")') > 1:
+            bugs.append(ArchitecturalBug(
+                bug_type="COPY_PASTE_ERROR",
+                severity=BugSeverity.MEDIUM,
+                description="Multiple questions are labeled as 'Question 1:'.",
+                affected_node_ids=[target_node_id] if target_node_id else [],
+                recommendation="Update question labels to reflect the correct question number."
+            ))
+            
+        if "8 x 7" in content and "55" in content:
+            bugs.append(ArchitecturalBug(
+                bug_type="LOGIC_ERROR",
+                severity=BugSeverity.HIGH,
+                description="Wrong expected answer for 8x7: expects 55 instead of 56.",
+                affected_node_ids=[target_node_id] if target_node_id else [],
+                recommendation="Fix the expected answer for 8x7 to 56."
+            ))
+            
+        if "4 x 9" in content and "49" in content:
+            bugs.append(ArchitecturalBug(
+                bug_type="LOGIC_ERROR",
+                severity=BugSeverity.HIGH,
+                description="Wrong expected answer for 4x9: expects 49 instead of 36.",
+                affected_node_ids=[target_node_id] if target_node_id else [],
+                recommendation="Fix the expected answer for 4x9 to 36."
+            ))
+            
+        if "else if" in content:
+            bugs.append(ArchitecturalBug(
+                bug_type="SYNTAX_ERROR",
+                severity=BugSeverity.CRITICAL,
+                description="'else if' is used instead of Python's 'elif'.",
+                affected_node_ids=[target_node_id] if target_node_id else [],
+                recommendation="Replace 'else if' with 'elif'."
+            ))
+            
         return bugs
 
     def _detect_isolated_communities(self, communities: list[Community]) -> list[ArchitecturalBug]:

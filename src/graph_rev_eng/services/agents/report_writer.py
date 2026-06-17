@@ -80,7 +80,12 @@ class ReportWriterAgent(BaseAgent, LLMStubMixin):
     ) -> str:
         """Generates the executive summary via LLM and builds the full markdown report."""
         graph, communities, insights, inspection_results, bugs = data
-        prompt = f"Summarise findings: {len(insights)} insights, {len(bugs)} bugs."
+        prompt = (
+            f"Write a concise executive summary based ONLY on the following findings.\n"
+            f"Do not invent or hallucinate any details. Use only the provided information.\n\n"
+            f"Insights:\n" + "\n".join(f"- {i.title}: {i.observation}" for i in insights) + "\n\n"
+            f"Bugs:\n" + "\n".join(f"- {b.bug_type}: {b.description}" for b in bugs)
+        )
         t_in = self._counter.estimate_tokens(prompt)
         summary_text = self._llm_call(prompt)
         t_out = self._counter.estimate_tokens(summary_text)

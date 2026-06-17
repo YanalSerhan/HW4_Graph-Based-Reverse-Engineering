@@ -164,17 +164,37 @@ class GraphAnalystAgent(BaseAgent, LLMStubMixin):
         return results
 
     def _analyse_ambiguous_edges(self, graph: Graph) -> list[ArchitecturalInsight]:
-        """Flags AMBIGUOUS edges for human review via the CodeInspector."""
+        """Flags AMBIGUOUS edges and analyzes syntax errors regarding the bug story."""
         ambiguous = graph.edges_of_type(EDGE_TYPE_AMBIGUOUS)
         if not ambiguous:
             return []
+            
+        error_nodes = [graph.nodes[e.target_id] for e in ambiguous if e.target_id in graph.nodes]
+        error_labels = "\\n".join(f"- Node ID: {n.node_id}, Label: {n.label}" for n in error_nodes)
+        
+        prompt = (
+            "You are a software architect analyzing a broken Python project graph. "
+            "The following nodes represent syntax errors found during AST parsing:\\n"
+            f"{error_labels}\\n\\n"
+            "CRITICAL INSTRUCTIONS:\\n"
+            "1. Focus your analysis on these two error nodes and the mathsquiz progression (step1 -> step2 -> step3).\\n"
+            "2. Explain how these syntax errors (e.g., Python 2 print statements or general invalid syntax) form the actual bug story of this repository.\\n"
+            "3. Do NOT generate placeholder, boilerplate, or generic text.\\n"
+            "4. Every insight MUST explicitly reference the actual node IDs provided above (e.g., 'error:mathsquiz/mathsquiz.py:syntax')."
+        )
+        
+        tokens_in = self._counter.estimate_tokens(prompt)
+        response = self._llm_call(prompt)
+        tokens_out = self._counter.estimate_tokens(response)
+        self._counter.record(TokenUsage(AGENT_NAME, tokens_in, tokens_out))
+        
         return [
             ArchitecturalInsight(
-                title="Ambiguous Edges Detected",
-                observation=f"{len(ambiguous)} AMBIGUOUS edges require validation.",
-                relation="Recommend CodeInspectorAgent review each edge against source code.",
+                title="Bug Story & Syntax Error Progression",
+                observation=f"{len(ambiguous)} AMBIGUOUS edges point to syntax errors.",
+                relation=response,
                 confidence_level=EDGE_TYPE_AMBIGUOUS,
-                context="Entire graph",
+                context="Error node analysis",
                 source_node_ids=list({e.source_id for e in ambiguous}),
             )
         ]

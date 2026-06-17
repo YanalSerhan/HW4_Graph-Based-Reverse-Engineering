@@ -57,12 +57,40 @@ class ReverseEngineeringSDK:
                 timeout=600,
             )
         except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-            # Grphify not installed or failed — fall back to existing path
+            # Grphify not installed or failed — fall back to internal AST parser
             import logging
+            import json
+            from dataclasses import asdict
+            from ..services.ast_parser import ASTGraphBuilder
 
             logging.getLogger(__name__).warning(
-                "Grphify unavailable (%s). Using existing graph at %s.", exc, output_path
+                "Grphify unavailable (%s). Falling back to internal AST parser.", exc
             )
+            
+            graph = ASTGraphBuilder().build(Path(repo_path))
+            
+            nodes_json = []
+            for v in graph.nodes.values():
+                d = asdict(v)
+                d["id"] = d.pop("node_id")
+                d["type"] = d.pop("node_type")
+                nodes_json.append(d)
+                
+            edges_json = []
+            for e in graph.edges:
+                d = asdict(e)
+                d["source"] = d.pop("source_id")
+                d["target"] = d.pop("target_id")
+                d["type"] = d.pop("edge_type")
+                edges_json.append(d)
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "nodes": nodes_json,
+                    "edges": edges_json,
+                    "hyperedges": [],
+                    "metadata": {}
+                }, f, indent=2)
 
         # Ensure dummy outputs if they don't exist, to satisfy agents in mock environments
         if not html_path.exists():
@@ -110,6 +138,17 @@ class ReverseEngineeringSDK:
 
         Returns a PipelineResult with report path and token usage summary.
         """
+        if llm_call is None:
+            from ..shared.gatekeeper import ApiGatekeeper, RateLimitConfig
+            from ..services.llm import OpenAILLM
+            
+            rate_limits = self._config.get_rate_limits()
+            rl_config = RateLimitConfig.from_dict(rate_limits)
+            gatekeeper = ApiGatekeeper(rl_config)
+            
+            api_key = self._config.get_api_key("LLM_API_KEY")
+            llm_call = OpenAILLM(gatekeeper, api_key)
+
         config = PipelineConfig(
             github_url=github_url,
             graph_json_path=graph_path or (RESULTS_DIR / "graph.json"),
