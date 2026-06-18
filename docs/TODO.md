@@ -277,13 +277,13 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 6.1 — Token Efficiency Experiment (Mandatory per Assignment)
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Establish a baseline: run a naive RAG approach (load all skill descriptions into context) on 5 representative queries; record exact token counts (input + output)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run the Grphify graph-based approach on the same 5 queries using Index-First Retrieval; record exact token counts
-- [ ] [P1] [Not Started] [Owner: AI Agent] Produce a comparison table in `results/token_analysis.md`:
+- [x] [P1] [Done] [Owner: AI Agent] Establish a baseline: run a naive RAG approach (load all skill descriptions into context) on 5 representative queries; record exact token counts (input + output)
+- [x] [P1] [Done] [Owner: AI Agent] Run the Grphify graph-based approach on the same 5 queries using Index-First Retrieval; record exact token counts
+- [x] [P1] [Done] [Owner: AI Agent] Produce a comparison table in `results/token_analysis.md`:
   | Query | Naive RAG Tokens | Graph-Based Tokens | Reduction % |
   |-------|-----------------|-------------------|-------------|
-- [ ] [P1] [Not Started] [Owner: AI Agent] Calculate and report total cost in USD using the cost table format (Model / Input Tokens / Output Tokens / Total Cost)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Document token optimization strategies applied: batch processing, context compaction, subgraph pruning
+- [x] [P1] [Done] [Owner: AI Agent] Calculate and report total cost in USD using the cost table format (Model / Input Tokens / Output Tokens / Total Cost)
+- [x] [P1] [Done] [Owner: AI Agent] Document token optimization strategies applied: batch processing, context compaction, subgraph pruning
 
 ### 6.2 — Parameter Sensitivity Analysis
 
@@ -295,20 +295,20 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 ### 6.3 — Visualization Artifacts (Mandatory)
 
 - [x] [P1] [Done] [Owner: AI Agent] Generate and save `results/graph.json` and `results/graph.html` (interactive graph via Grphify or D3.js/Plotly)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Produce a **Community Map** visualization: color-coded communities, hub size proportional to centrality, bridge edges highlighted
-- [ ] [P1] [Not Started] [Owner: AI Agent] Produce a **Bar chart**: top 10 nodes by centrality score
-- [ ] [P1] [Not Started] [Owner: AI Agent] Produce a **Heatmap**: community-to-community dependency matrix (who depends on whom)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Produce a **Token Efficiency Line Chart**: tokens used vs. number of skills loaded (showing the cost of naive approach vs. graph-based)
-- [ ] [P1] [Not Started] [Owner: AI Agent] All visualizations: clear labels, accessible colors, high resolution, saved to `assets/`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Include at least 2 architecture diagrams (C4 or UML) in `assets/` — referenced in `docs/PLAN.md` and `README.md`
+- [x] [P1] [Done] [Owner: AI Agent] Produce a **Community Map** visualization: color-coded communities, hub size proportional to centrality, bridge edges highlighted
+- [x] [P1] [Done] [Owner: AI Agent] Produce a **Bar chart**: top 10 nodes by centrality score
+- [x] [P1] [Done] [Owner: AI Agent] Produce a **Heatmap**: community-to-community dependency matrix (who depends on whom)
+- [x] [P1] [Done] [Owner: AI Agent] Produce a **Token Efficiency Line Chart**: tokens used vs. number of skills loaded (showing the cost of naive approach vs. graph-based)
+- [x] [P1] [Done] [Owner: AI Agent] All visualizations: clear labels, accessible colors, high resolution, saved to `assets/`
+- [x] [P1] [Done] [Owner: AI Agent] Include at least 2 architecture diagrams (C4 or UML) in `assets/` — referenced in `docs/PLAN.md` and `README.md`
 
 ### 6.4 — Confusion Matrix for Agent Accuracy (Bonus from Lecture Q&A)
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Define a ground-truth dataset: 20–30 architectural facts about the chosen codebase (e.g., "Function X calls Function Y" — True/False)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run the `CodeInspectorAgent` on all items and record its predictions
-- [ ] [P1] [Not Started] [Owner: AI Agent] Build a Confusion Matrix: True Positives, False Positives, True Negatives, False Negatives
-- [ ] [P1] [Not Started] [Owner: AI Agent] Compute Precision, Recall, F1-score for the agent
-- [ ] [P1] [Not Started] [Owner: AI Agent] Save to `results/agent_confusion_matrix.md` and `assets/confusion_matrix.png`
+- [x] [P1] [Done] [Owner: AI Agent] Define a ground-truth dataset: 20–30 architectural facts about the chosen codebase (e.g., "Function X calls Function Y" — True/False)
+- [x] [P1] [Done] [Owner: AI Agent] Run the `CodeInspectorAgent` on all items and record its predictions
+- [x] [P1] [Done] [Owner: AI Agent] Build a Confusion Matrix: True Positives, False Positives, True Negatives, False Negatives
+- [x] [P1] [Done] [Owner: AI Agent] Compute Precision, Recall, F1-score for the agent
+- [x] [P1] [Done] [Owner: AI Agent] Save to `results/agent_confusion_matrix.md` and `assets/confusion_matrix.png`
 
 ---
 
@@ -323,10 +323,10 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 7.2 — Prompt Engineering Log (Mandatory per Guidelines)
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Maintain `docs/prompt_log.md` throughout the project — log every significant prompt used with the LLM during development
-- [ ] [P1] [Not Started] [Owner: AI Agent] Each entry must include: objective, full prompt text, sample response, iterative improvements made, and lessons learned
-- [ ] [P1] [Not Started] [Owner: AI Agent] Document the prompts used to: generate SKILL.md files, instruct the GraphAnalystAgent, instruct the CodeInspectorAgent, and generate the final report
-- [ ] [P1] [Not Started] [Owner: AI Agent] Note which prompting techniques improved results (chain-of-thought, few-shot examples, XML tags for structured output, position-aware placement of rules)
+- [x] [P1] [Done] [Owner: AI Agent] Maintain `docs/prompt_log.md` throughout the project — log every significant prompt used with the LLM during development
+- [x] [P1] [Done] [Owner: AI Agent] Each entry must include: objective, full prompt text, sample response, iterative improvements made, and lessons learned
+- [x] [P1] [Done] [Owner: AI Agent] Document the prompts used to: generate SKILL.md files, instruct the GraphAnalystAgent, instruct the CodeInspectorAgent, and generate the final report
+- [x] [P1] [Done] [Owner: AI Agent] Note which prompting techniques improved results (chain-of-thought, few-shot examples, XML tags for structured output, position-aware placement of rules)
 
 ---
 
@@ -362,7 +362,7 @@ Run through every item in the submission guidelines' final checklist and mark ea
 - [ ] [P1] [Not Started] [Owner: AI Agent] **Code & Architecture**: SDK layer for all business logic, OOP with no duplication, API Gatekeeper for all LLM calls, rate limits from config, all files ≤ 150 lines, docstrings on all public APIs, consistent naming
 - [ ] [P1] [Not Started] [Owner: AI Agent] **Quality & Testing**: TDD workflow followed, ≥ 85% test coverage, `ruff check` zero errors, edge cases documented and tested, automated test reports saved
 - [ ] [P1] [Not Started] [Owner: AI Agent] **Security & Config**: separate config files with versioning, `.env-example` present, zero secrets in source code, `.gitignore` updated, `uv` as sole package manager, `uv.lock` and `pyproject.toml` committed
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Research & Visualization**: parameter sensitivity analysis, token efficiency experiment with cost table, high-quality visualizations, analysis notebook
+- [x] [P1] [Done] [Owner: AI Agent] **Research & Visualization**: parameter sensitivity analysis, token efficiency experiment with cost table, high-quality visualizations, analysis notebook
 - [ ] [P1] [Not Started] [Owner: AI Agent] **Standards & Extensibility**: plugin/extension points documented, package organized as proper Python package, ISO/IEC 25010 self-assessment, references to MIT SQA / Google Engineering / Microsoft API / Nielsen guidelines
 - [ ] [P1] [Not Started] [Owner: AI Agent] **General**: clean Git history with meaningful commit messages, license file, deployment instructions
 
@@ -386,8 +386,8 @@ Run through every item in the submission guidelines' final checklist and mark ea
 **The Insight:** The lesson mentions that Grphify should be re-run after every significant change. Take this literally and build it into a CI/CD pipeline. Every `git commit` triggers a Grphify rescan, the new `graph.json` is diffed against the previous version, and an `ArchitecturalDriftAgent` reports: "Community X gained 3 new external dependencies since last commit — potential god-node forming."
 
 **Tasks:**
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement `GraphDiffer`: compare two `graph.json` files and produce a structured diff (nodes added/removed, edge type changes, community splits/merges, centrality rank shifts)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Create a GitHub Actions workflow (`.github/workflows/arch_check.yml`) that runs Grphify and `GraphDiffer` on every push and posts a summary comment on the PR
+- [x] [P1] [Done] [Owner: AI Agent] Implement `GraphDiffer`: compare two `graph.json` files and produce a structured diff (nodes added/removed, edge type changes, community splits/merges, centrality rank shifts)
+- [x] [P1] [Done] [Owner: AI Agent] Create a GitHub Actions workflow (`.github/workflows/arch_check.yml`) that runs Grphify and `GraphDiffer` on every push and posts a summary comment on the PR
 - [ ] [P1] [Not Started] [Owner: AI Agent] Implement `DriftAlertAgent`: classify drift as benign (refactor), concerning (new SPOF), or critical (community boundary violation)
 - [ ] [P1] [Not Started] [Owner: AI Agent] Visualize drift as a before/after animated graph delta in `results/drift_animation.html`
 
@@ -398,7 +398,7 @@ Run through every item in the submission guidelines' final checklist and mark ea
 **The Insight:** The three edge types (Extracted, Inferred, Ambiguous) have fundamentally different epistemic statuses. Build a small interactive HTML dashboard that lets a human reviewer quickly validate or reject all `Inferred` and `Ambiguous` edges in batch, turning the graph from a hypothesis into ground truth.
 
 **Tasks:**
-- [ ] [P1] [Not Started] [Owner: AI Agent] Build `results/validation_dashboard.html`: a pure HTML/JS/D3.js interface (no backend required) that loads `graph.json` and renders all Inferred/Ambiguous edges as cards with "Confirm ✓ / Reject ✗ / Escalate ?" buttons
+- [x] [P1] [Done] [Owner: AI Agent] Build `results/validation_dashboard.html`: a pure HTML/JS/D3.js interface (no backend required) that loads `graph.json` and renders all Inferred/Ambiguous edges as cards with "Confirm ✓ / Reject ✗ / Escalate ?" buttons
 - [ ] [P1] [Not Started] [Owner: AI Agent] Implement local state persistence: validation decisions saved to `results/validated_edges.json`
 - [ ] [P1] [Not Started] [Owner: AI Agent] Implement `GraphRefiner`: reads `validated_edges.json` and produces a `graph_ground_truth.json` with only confirmed edges — the cleanest possible knowledge graph
 - [ ] [P1] [Not Started] [Owner: AI Agent] Feed `graph_ground_truth.json` back into the agent pipeline and measure the Precision/Recall improvement vs. using the raw graph
@@ -424,7 +424,7 @@ Run through every item in the submission guidelines' final checklist and mark ea
 **Tasks:**
 - [ ] [P1] [Not Started] [Owner: AI Agent] Implement `DatasetGenerator`: uses an LLM to generate 1,000+ architectural questions about the target codebase (e.g., "Does `function_a` in `module_x` call `function_b` in `module_y`?") with ground-truth answers derived from Grphify's `Extracted` (deterministic) edges
 - [ ] [P1] [Not Started] [Owner: AI Agent] Implement `ErrorInjector`: systematically introduce errors into a copy of the codebase (rename functions, change call sites) at increasing rates (5%, 10%, 20%, 50%) to simulate degradation
-- [ ] [P1] [Not Started] [Owner: AI Agent] Run the `CodeInspectorAgent` against all error levels and plot the Confusion Matrix at each level — find the "breaking point" where the agent's F1 score collapses
+- [x] [P1] [Done] [Owner: AI Agent] Run the `CodeInspectorAgent` against all error levels and plot the Confusion Matrix at each level — find the "breaking point" where the agent's F1 score collapses
 - [ ] [P1] [Not Started] [Owner: AI Agent] Produce a publishable-quality results table and learning curve graph
 - [ ] [P1] [Not Started] [Owner: AI Agent] This dataset is a contribution in itself — describe it as a reusable evaluation benchmark for architectural analysis agents
 

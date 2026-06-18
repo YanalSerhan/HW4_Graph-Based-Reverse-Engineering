@@ -1,6 +1,5 @@
 # AI-Powered Graph-Based Reverse Engineering
-
-![Edge Validation Dashboard](assets/dashboard_screenshot.png)
+![Graph Visualization](assets/graph_viz_screenshot.png)
 
 ## Project Overview
 This project is an AI-driven Reverse Engineering SDK designed to automatically analyze, navigate, and debug legacy codebases. By integrating **Grphify** (via AST parsing), an **Obsidian** markdown navigation vault, and a **Multi-Agent AI System**, we can extract the structural dependencies of a project, identify architectural anti-patterns, and autonomously suggest (and apply) concrete bug fixes. 

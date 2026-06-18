@@ -64,7 +64,7 @@ def main() -> None:
         d = asdict(e)
         d["source"] = d.pop("source_id")
         d["target"] = d.pop("target_id")
-        d["type"] = d.pop("edge_type")
+        # Keep edge_type instead of popping it to type
         edges_json.append(d)
 
     with open(graph_path, "w", encoding="utf-8") as f:

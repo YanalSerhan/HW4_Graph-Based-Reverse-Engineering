@@ -97,10 +97,20 @@
 <canvas id="graphCanvas"></canvas>
 
 <div class="panel">
-  <h2>Interactive Graph</h2>
+  <h2 style="font-size: 1.1rem; margin-bottom: 8px;">broken-python Architectural Graph</h2>
+  <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 15px;">
+    19 nodes, 26 edges, 2 communities
+  </div>
+  <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8rem; line-height: 1.4;">
+    <strong>What am I looking at?</strong><br><br>
+    Each dot is a file or function. Lines show dependencies.<br><br>
+    <span style="color:#fb923c">Orange cluster</span> = mathsquiz community.<br>
+    <span style="color:#2dd4a0">Teal cluster</span> = polygons community.<br>
+    <span style="color:#f87171; font-weight: bold;">Red pulsing nodes</span> = bugs detected.
+  </div>
   <div class="file-input-wrapper">
     <label class="btn btn-primary">
-      📂 Load graph.json
+      📂 Load different graph.json
       <input type="file" id="fileInput" accept=".json" style="display:none">
     </label>
   </div>
@@ -151,20 +161,13 @@
 <script>
 const canvas = document.getElementById('graphCanvas');
 const ctx = canvas.getContext('2d');
-let width = window.innerWidth;
-let height = window.innerHeight;
+let width = 1200;
+let height = 800;
 canvas.width = width;
 canvas.height = height;
 
-window.addEventListener('resize', () => {
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvas.width = width;
-  canvas.height = height;
-});
-
 // Viewport
-let transform = { x: width/2, y: height/2, scale: 1 };
+let transform = { x: 0, y: 0, scale: 1 };
 let isPanning = false;
 let startPan = { x:0, y:0 };
 
@@ -174,32 +177,176 @@ let edges = [];
 let selectedNode = null;
 let hoveredNode = null;
 
-// Configs
-const K_REPEL = 4000;
-const K_SPRING = 0.05;
-const SPRING_LEN = 150;
-const DAMPING = 0.85;
-
 // Filters
 let edgeFilters = new Set(['EXTRACTED', 'INFERRED', 'AMBIGUOUS']);
 let commFilters = new Set(['mathsquiz', 'polygons', 'unknown']);
+
+function draw() {
+  ctx.clearRect(0, 0, width, height);
+  ctx.save();
+  ctx.translate(transform.x, transform.y);
+  ctx.scale(transform.scale, transform.scale);
+
+  let activeNodes = nodes.filter(n => commFilters.has(n.community));
+  let activeEdges = edges.filter(e => 
+    edgeFilters.has(e.type) && 
+    commFilters.has(e.source.community) && 
+    commFilters.has(e.target.community)
+  );
+
+  // Highlighting logic
+  let highlightNodes = new Set();
+  let highlightEdges = new Set();
+  if (selectedNode) {
+    highlightNodes.add(selectedNode);
+    activeEdges.forEach(e => {
+      if (e.source === selectedNode || e.target === selectedNode) {
+        highlightEdges.add(e);
+        highlightNodes.add(e.source);
+        highlightNodes.add(e.target);
+      }
+    });
+  }
+
+  // Draw Community Bounding Boxes
+  let comms = { mathsquiz: [], polygons: [] };
+  activeNodes.forEach(n => {
+    if (n.community === 'mathsquiz') comms.mathsquiz.push(n);
+    else if (n.community === 'polygons') comms.polygons.push(n);
+  });
+
+  for (let c in comms) {
+    if (comms[c].length === 0) continue;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    comms[c].forEach(n => {
+      if (n.x < minX) minX = n.x;
+      if (n.y < minY) minY = n.y;
+      if (n.x > maxX) maxX = n.x;
+      if (n.y > maxY) maxY = n.y;
+    });
+    
+    // Add 40px padding around bounding box (80px on bottom for mathsquiz)
+    minX -= 40; minY -= 40;
+    maxX += 40; 
+    maxY += (c === 'mathsquiz') ? 80 : 40;
+    let w = maxX - minX;
+    let h = maxY - minY;
+    
+    ctx.beginPath();
+    ctx.roundRect(minX, minY, w, h, 15);
+    
+    if (c === 'mathsquiz') {
+      ctx.fillStyle = 'rgba(251, 146, 60, 0.15)';
+      ctx.strokeStyle = 'rgba(251, 146, 60, 0.4)';
+    } else {
+      ctx.fillStyle = 'rgba(45, 212, 160, 0.15)';
+      ctx.strokeStyle = 'rgba(45, 212, 160, 0.4)';
+    }
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+    
+    // Label
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = c === 'mathsquiz' ? 'rgba(251, 146, 60, 0.9)' : 'rgba(45, 212, 160, 0.9)';
+    ctx.fillText(c, minX + 10, minY + 20);
+  }
+
+  // Draw Edges
+  activeEdges.forEach(e => {
+    if (selectedNode && !highlightEdges.has(e)) {
+      ctx.globalAlpha = 0.1;
+    } else {
+      ctx.globalAlpha = 0.6;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(e.source.x, e.source.y);
+    ctx.lineTo(e.target.x, e.target.y);
+    
+    if (e.type === 'EXTRACTED') { ctx.strokeStyle = '#34d399'; ctx.setLineDash([]); }
+    else if (e.type === 'INFERRED') { ctx.strokeStyle = '#a78bfa'; ctx.setLineDash([5, 5]); }
+    else { ctx.strokeStyle = '#f87171'; ctx.setLineDash([5, 5]); }
+    
+    ctx.lineWidth = selectedNode && highlightEdges.has(e) ? 3 : 1.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+  });
+
+  ctx.setLineDash([]);
+
+  // Draw Nodes
+  activeNodes.forEach(n => {
+    let isDimmed = selectedNode && !highlightNodes.has(n);
+    ctx.globalAlpha = isDimmed ? 0.15 : 1.0;
+
+    let r = Math.max(12, Math.min(35, 12 + n.degree * 3));
+    
+    // Community Tint Halo
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r + 6, 0, Math.PI * 2);
+    if (n.community === 'mathsquiz') ctx.fillStyle = 'rgba(251, 146, 60, 0.2)';
+    else if (n.community === 'polygons') ctx.fillStyle = 'rgba(45, 212, 160, 0.2)';
+    else ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fill();
+
+    // Node Core
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    if (n.type === 'module') ctx.fillStyle = '#60a5fa';
+    else if (n.type === 'function') ctx.fillStyle = '#a78bfa';
+    else if (n.type === 'error') {
+      let pulse = Math.abs(Math.sin(Date.now() / 200));
+      ctx.fillStyle = `rgba(248, 113, 113, ${0.4 + pulse * 0.6})`;
+      ctx.shadowColor = '#f87171';
+      ctx.shadowBlur = pulse * 20;
+    }
+    else ctx.fillStyle = '#9ca3af';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    if (n === hoveredNode || n === selectedNode) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
+    // Label
+    if (!isDimmed) {
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      
+      let textWidth = ctx.measureText(n.label).width;
+      ctx.fillStyle = 'rgba(15, 17, 23, 0.85)';
+      ctx.fillRect(n.x - textWidth/2 - 6, n.y + r + 4, textWidth + 12, 16);
+      
+      ctx.fillStyle = '#e4e6ed';
+      ctx.fillText(n.label, n.x, n.y + r + 15);
+    }
+  });
+
+  ctx.restore();
+}
 
 document.querySelectorAll('.edge-filter').forEach(cb => {
   cb.addEventListener('change', e => {
     if (e.target.checked) edgeFilters.add(e.target.value);
     else edgeFilters.delete(e.target.value);
+    draw();
   });
 });
 document.querySelectorAll('.comm-filter').forEach(cb => {
   cb.addEventListener('change', e => {
     if (e.target.checked) commFilters.add(e.target.value);
     else commFilters.delete(e.target.value);
+    draw();
   });
 });
 
-document.getElementById('btnZoomIn').onclick = () => transform.scale *= 1.2;
-document.getElementById('btnZoomOut').onclick = () => transform.scale /= 1.2;
-document.getElementById('btnReset').onclick = () => { selectedNode = null; };
+document.getElementById('btnZoomIn').onclick = () => { transform.scale *= 1.2; draw(); };
+document.getElementById('btnZoomOut').onclick = () => { transform.scale /= 1.2; draw(); };
+document.getElementById('btnReset').onclick = () => { selectedNode = null; draw(); };
 
 document.getElementById('fileInput').addEventListener('change', e => {
   const file = e.target.files[0];
@@ -235,16 +382,19 @@ function initGraph(data) {
     type: (n.type || n.node_type || "unknown").toLowerCase(),
     file_path: n.file_path || "",
     degree: 0,
-    x: (Math.random() - 0.5) * width,
-    y: (Math.random() - 0.5) * height,
-    vx: 0, vy: 0,
-    community: 'unknown'
+    x: 0, y: 0,
+    community: 'mathsquiz'
   }));
   
   nodes.forEach(n => {
     let str = (n.file_path || n.id).toLowerCase();
     if (str.includes('mathsquiz')) n.community = 'mathsquiz';
     else if (str.includes('polygons')) n.community = 'polygons';
+
+    if (n.type === 'error') {
+      if (n.community === 'mathsquiz') n.label = '⚠️ mathsquiz: SyntaxError';
+      if (n.community === 'polygons') n.label = '⚠️ polygons: SyntaxError';
+    }
   });
 
   edges = rawEdges.map(e => {
@@ -263,7 +413,57 @@ function initGraph(data) {
     };
   }).filter(e => e.source && e.target);
   
-  transform = { x: width/2, y: height/2, scale: 1 };
+  // STATIC HIERARCHICAL LAYOUT
+  const mathsquizCenterX = 550;
+  const centerY = 400;
+
+  // Center Hubs
+  const centerId = "file:mathsquiz/mathsquiz-step2.py";
+  const mathsquizPyId = "file:mathsquiz/mathsquiz.py";
+  
+  // Ring 1 Exact IDs
+  const ring1Ids = [
+    "func:mathsquiz/mathsquiz-step2.py:ask_question",
+    "func:mathsquiz/mathsquiz-step2.py:welcome_message",
+    "func:mathsquiz/mathsquiz-step2.py:print_final_scores",
+    "file:mathsquiz/mathsquiz-step3.py",
+    "file:mathsquiz/mathsquiz-step1.py"
+  ];
+  
+  nodes.forEach(n => {
+    if (n.type === 'error' && n.community === 'mathsquiz') {
+      n.x = 900; n.y = 150;
+    } else if (n.id === mathsquizPyId) {
+      n.x = 900; n.y = 400;
+    } else if (n.community === 'polygons') {
+      if (n.type === 'error') { n.x = 1050; n.y = 500; }
+      else { n.x = 1050; n.y = 350; }
+    } else if (n.id === centerId) {
+      n.x = mathsquizCenterX; n.y = centerY;
+    } else {
+      // Check Ring 1
+      let idx = ring1Ids.indexOf(n.id);
+      if (idx !== -1) {
+        let angle = (idx / ring1Ids.length) * Math.PI * 2;
+        n.x = mathsquizCenterX + Math.cos(angle) * 180;
+        n.y = centerY + Math.sin(angle) * 180;
+      }
+    }
+  });
+
+  // FALLBACK: Ring 2 for unassigned nodes
+  let remaining = nodes.filter(n => n.x === 0 && n.y === 0);
+  remaining.forEach((n, i) => {
+    let angle = (i / remaining.length) * Math.PI * 2 + 0.5;
+    n.x = mathsquizCenterX + Math.cos(angle) * 320;
+    n.y = centerY + Math.sin(angle) * 320;
+  });
+
+  transform = { x: 0, y: 0, scale: 1 };
+  
+  // Initial draw + pulse loop
+  draw();
+  setInterval(draw, 100);
 }
 
 // Interaction
@@ -274,15 +474,18 @@ canvas.addEventListener('mousedown', e => {
   if (dragNode) {
     selectedNode = dragNode;
   } else {
+    selectedNode = null;
     isPanning = true;
     startPan = { x: e.clientX - transform.x, y: e.clientY - transform.y };
   }
+  draw();
 });
 
 canvas.addEventListener('mousemove', e => {
   if (isPanning) {
     transform.x = e.clientX - startPan.x;
     transform.y = e.clientY - startPan.y;
+    draw();
     return;
   }
   
@@ -290,9 +493,10 @@ canvas.addEventListener('mousemove', e => {
   if (dragNode) {
     dragNode.x = pos.x;
     dragNode.y = pos.y;
-    dragNode.vx = 0; dragNode.vy = 0;
+    draw();
   } else {
     hoveredNode = getNodeAt(pos.x, pos.y);
+    draw();
     const tt = document.getElementById('tooltip');
     if (hoveredNode) {
       tt.style.opacity = 1;
@@ -309,11 +513,12 @@ canvas.addEventListener('mousemove', e => {
   }
 });
 
-canvas.addEventListener('mouseup', () => { dragNode = null; isPanning = false; });
+canvas.addEventListener('mouseup', () => { dragNode = null; isPanning = false; draw(); });
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
   const zoom = Math.exp(e.deltaY * -0.001);
   transform.scale *= zoom;
+  draw();
 });
 
 function getMousePos(e) {
@@ -327,7 +532,7 @@ function getNodeAt(x, y) {
   for (let i = nodes.length - 1; i >= 0; i--) {
     let n = nodes[i];
     if (!commFilters.has(n.community)) continue;
-    let r = Math.max(5, Math.min(25, n.degree * 2));
+    let r = Math.max(12, Math.min(35, 12 + n.degree * 3));
     let dx = x - n.x;
     let dy = y - n.y;
     if (dx*dx + dy*dy <= r*r) return n;
@@ -335,163 +540,385 @@ function getNodeAt(x, y) {
   return null;
 }
 
-function physics() {
-  let activeNodes = nodes.filter(n => commFilters.has(n.community));
-  let activeEdges = edges.filter(e => 
-    edgeFilters.has(e.type) && 
-    commFilters.has(e.source.community) && 
-    commFilters.has(e.target.community)
-  );
-
-  for (let i=0; i<activeNodes.length; i++) {
-    for (let j=i+1; j<activeNodes.length; j++) {
-      let n1 = activeNodes[i];
-      let n2 = activeNodes[j];
-      let dx = n1.x - n2.x; let dy = n1.y - n2.y;
-      let dSq = dx*dx + dy*dy;
-      if (dSq === 0) dSq = 0.1;
-      if (dSq < 200000) {
-        let f = K_REPEL / dSq;
-        n1.vx += f * dx; n1.vy += f * dy;
-        n2.vx -= f * dx; n2.vy -= f * dy;
-      }
+const EMBEDDED_GRAPH = {
+  "nodes": [
+    {
+      "label": "mathsquiz-step1.py",
+      "file_path": "mathsquiz/mathsquiz-step1.py",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "file:mathsquiz/mathsquiz-step1.py",
+      "type": "module"
+    },
+    {
+      "label": "mathsquiz-step2.py",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "file:mathsquiz/mathsquiz-step2.py",
+      "type": "module"
+    },
+    {
+      "label": "welcome_message",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 3,
+      "community_id": -1,
+      "metadata": {},
+      "id": "func:mathsquiz/mathsquiz-step2.py:welcome_message",
+      "type": "function"
+    },
+    {
+      "label": "ask_question",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 8,
+      "community_id": -1,
+      "metadata": {},
+      "id": "func:mathsquiz/mathsquiz-step2.py:ask_question",
+      "type": "function"
+    },
+    {
+      "label": "print_final_scores",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 23,
+      "community_id": -1,
+      "metadata": {},
+      "id": "func:mathsquiz/mathsquiz-step2.py:print_final_scores",
+      "type": "function"
+    },
+    {
+      "label": "welcome_message",
+      "file_path": "",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "call:welcome_message",
+      "type": "function"
+    },
+    {
+      "label": "print_final_scores",
+      "file_path": "",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "call:print_final_scores",
+      "type": "function"
+    },
+    {
+      "label": "ask_question",
+      "file_path": "",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "call:ask_question",
+      "type": "function"
+    },
+    {
+      "label": "mathsquiz-step3.py",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "file:mathsquiz/mathsquiz-step3.py",
+      "type": "module"
+    },
+    {
+      "label": "random",
+      "file_path": "",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "module:random",
+      "type": "module"
+    },
+    {
+      "label": "welcome_message",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 4,
+      "community_id": -1,
+      "metadata": {},
+      "id": "func:mathsquiz/mathsquiz-step3.py:welcome_message",
+      "type": "function"
+    },
+    {
+      "label": "ask_question",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 9,
+      "community_id": -1,
+      "metadata": {},
+      "id": "func:mathsquiz/mathsquiz-step3.py:ask_question",
+      "type": "function"
+    },
+    {
+      "label": "print_final_scores",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 27,
+      "community_id": -1,
+      "metadata": {},
+      "id": "func:mathsquiz/mathsquiz-step3.py:print_final_scores",
+      "type": "function"
+    },
+    {
+      "label": "randint",
+      "file_path": "",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "call:randint",
+      "type": "function"
+    },
+    {
+      "label": "mathsquiz.py",
+      "file_path": "mathsquiz/mathsquiz.py",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "file:mathsquiz/mathsquiz.py",
+      "type": "module"
+    },
+    {
+      "label": "SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)? (<unknown>, line 3)",
+      "file_path": "mathsquiz/mathsquiz.py",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "error:mathsquiz/mathsquiz.py:syntax",
+      "type": "error"
+    },
+    {
+      "label": "polygons.py",
+      "file_path": "polygons/polygons.py",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "file:polygons/polygons.py",
+      "type": "module"
+    },
+    {
+      "label": "SyntaxError: invalid syntax (<unknown>, line 29)",
+      "file_path": "polygons/polygons.py",
+      "line_number": 0,
+      "community_id": -1,
+      "metadata": {},
+      "id": "error:polygons/polygons.py:syntax",
+      "type": "error"
     }
-  }
-
-  activeEdges.forEach(e => {
-    let dx = e.target.x - e.source.x;
-    let dy = e.target.y - e.source.y;
-    let dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist === 0) dist = 0.1;
-    let f = (dist - SPRING_LEN) * K_SPRING;
-    let fx = (dx / dist) * f;
-    let fy = (dy / dist) * f;
-    e.source.vx += fx; e.source.vy += fy;
-    e.target.vx -= fx; e.target.vy -= fy;
-  });
-
-  let maxSpeed = 15;
-  activeNodes.forEach(n => {
-    if (n === dragNode) return;
-    
-    // Center gravity to stop infinite drifting
-    n.vx += -n.x * 0.005;
-    n.vy += -n.y * 0.005;
-
-    n.vx *= DAMPING; n.vy *= DAMPING;
-    
-    // Cap maximum speed
-    let speed = Math.sqrt(n.vx*n.vx + n.vy*n.vy);
-    if (speed > maxSpeed) {
-      n.vx = (n.vx / speed) * maxSpeed;
-      n.vy = (n.vy / speed) * maxSpeed;
+  ],
+  "edges": [
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "func:mathsquiz/mathsquiz-step2.py:welcome_message"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "func:mathsquiz/mathsquiz-step2.py:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "func:mathsquiz/mathsquiz-step2.py:print_final_scores"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:welcome_message"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:print_final_scores"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "imports",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "module:random"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "func:mathsquiz/mathsquiz-step3.py:welcome_message"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "func:mathsquiz/mathsquiz-step3.py:ask_question"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "func:mathsquiz/mathsquiz-step3.py:print_final_scores"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:welcome_message"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:print_final_scores"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:randint"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:randint"
+    },
+    {
+      "edge_type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:ask_question"
+    },
+    {
+      "edge_type": "AMBIGUOUS",
+      "confidence": 0.4,
+      "label": "has_error",
+      "metadata": {},
+      "source": "file:mathsquiz/mathsquiz.py",
+      "target": "error:mathsquiz/mathsquiz.py:syntax"
+    },
+    {
+      "edge_type": "AMBIGUOUS",
+      "confidence": 0.4,
+      "label": "has_error",
+      "metadata": {},
+      "source": "file:polygons/polygons.py",
+      "target": "error:polygons/polygons.py:syntax"
     }
-
-    // Stop completely if almost still to prevent jitter
-    if (speed < 0.05) { n.vx = 0; n.vy = 0; }
-
-    n.x += n.vx; n.y += n.vy;
-  });
-}
-
-function draw() {
-  ctx.clearRect(0, 0, width, height);
-  ctx.save();
-  ctx.translate(transform.x, transform.y);
-  ctx.scale(transform.scale, transform.scale);
-
-  let activeNodes = nodes.filter(n => commFilters.has(n.community));
-  let activeEdges = edges.filter(e => 
-    edgeFilters.has(e.type) && 
-    commFilters.has(e.source.community) && 
-    commFilters.has(e.target.community)
-  );
-
-  // Highlighting logic
-  let highlightNodes = new Set();
-  let highlightEdges = new Set();
-  if (selectedNode) {
-    highlightNodes.add(selectedNode);
-    activeEdges.forEach(e => {
-      if (e.source === selectedNode || e.target === selectedNode) {
-        highlightEdges.add(e);
-        highlightNodes.add(e.source);
-        highlightNodes.add(e.target);
-      }
-    });
-  }
-
-  // Draw Edges
-  activeEdges.forEach(e => {
-    if (selectedNode && !highlightEdges.has(e)) {
-      ctx.globalAlpha = 0.1;
-    } else {
-      ctx.globalAlpha = 0.6;
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(e.source.x, e.source.y);
-    ctx.lineTo(e.target.x, e.target.y);
-    
-    if (e.type === 'EXTRACTED') { ctx.strokeStyle = '#34d399'; ctx.setLineDash([]); }
-    else if (e.type === 'INFERRED') { ctx.strokeStyle = '#a78bfa'; ctx.setLineDash([5, 5]); }
-    else { ctx.strokeStyle = '#f87171'; ctx.setLineDash([5, 5]); }
-    
-    ctx.lineWidth = selectedNode && highlightEdges.has(e) ? 3 : 1.5;
-    ctx.stroke();
-    ctx.globalAlpha = 1.0;
-  });
-
-  ctx.setLineDash([]);
-
-  // Draw Nodes
-  activeNodes.forEach(n => {
-    let isDimmed = selectedNode && !highlightNodes.has(n);
-    ctx.globalAlpha = isDimmed ? 0.15 : 1.0;
-
-    let r = Math.max(5, Math.min(25, n.degree * 2));
-    
-    // Community Tint Halo
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, r + 6, 0, Math.PI * 2);
-    if (n.community === 'mathsquiz') ctx.fillStyle = 'rgba(251, 146, 60, 0.2)';
-    else if (n.community === 'polygons') ctx.fillStyle = 'rgba(45, 212, 160, 0.2)';
-    else ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.fill();
-
-    // Node Core
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-    if (n.type === 'module') ctx.fillStyle = '#60a5fa';
-    else if (n.type === 'function') ctx.fillStyle = '#a78bfa';
-    else if (n.type === 'error') ctx.fillStyle = '#f87171';
-    else ctx.fillStyle = '#9ca3af';
-    ctx.fill();
-    
-    if (n === hoveredNode || n === selectedNode) {
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    
-    // Label
-    if (!isDimmed && (r > 10 || transform.scale > 1.5 || n === hoveredNode)) {
-      ctx.fillStyle = '#e4e6ed';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(n.label, n.x, n.y + r + 15);
-    }
-  });
-
-  ctx.restore();
-}
-
-function loop() {
-  physics();
-  draw();
-  requestAnimationFrame(loop);
-}
-loop();
+  ],
+  "hyperedges": [],
+  "metadata": {}
+};
+initGraph(EMBEDDED_GRAPH);
 </script>
 </body>
 </html>

@@ -27,6 +27,8 @@ class ASTGraphBuilder:
         logger.info("AST Parser: Found %d Python files in %s", len(py_files), repo_path)
         
         for py_file in py_files:
+            if py_file.name.endswith('_fixed.py'):
+                continue
             try:
                 rel_path = py_file.relative_to(repo_path).as_posix()
             except ValueError:
@@ -59,6 +61,7 @@ class ASTGraphBuilder:
                     source_id=file_node_id,
                     target_id=error_node_id,
                     edge_type=EDGE_TYPE_AMBIGUOUS,
+                    confidence=0.4,
                     label="has_error"
                 ))
 
