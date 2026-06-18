@@ -10,7 +10,7 @@ We chose to analyze [martinpeck/broken-python](https://github.com/martinpeck/bro
 
 ## Research Questions
 1. **What was the real architecture of the codebase?**
-   The architecture is heavily script-based, partitioned distinctly into two main communities: `mathsquiz` (16 nodes) and `polygons` (2 nodes).
+   The architecture is heavily script-based, partitioned distinctly into three main communities: `mathsquiz` (15 nodes), `polygons` (2 nodes), and a separate `mathsquiz` community (1 node) for `mathsquiz-step1.py`, which was detected as a fully isolated community (an orphaned/unused file, likely an early draft superseded by step2/step3).
 2. **Which components were most central?**
    The core functionality hinges on highly-connected hub nodes, specifically `mathsquiz-step2.py` (Degree: 15), `ask_question` (Degree: 11), and `mathsquiz-step3.py` (Degree: 9).
 3. **Where were the bugs and what was the root cause?**

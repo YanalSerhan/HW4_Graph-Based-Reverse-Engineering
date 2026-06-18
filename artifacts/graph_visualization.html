@@ -99,13 +99,14 @@
 <div class="panel">
   <h2 style="font-size: 1.1rem; margin-bottom: 8px;">broken-python Architectural Graph</h2>
   <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 15px;">
-    19 nodes, 26 edges, 2 communities
+    18 nodes, 26 edges, 3 communities
   </div>
   <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8rem; line-height: 1.4;">
     <strong>What am I looking at?</strong><br><br>
     Each dot is a file or function. Lines show dependencies.<br><br>
     <span style="color:#fb923c">Orange cluster</span> = mathsquiz community.<br>
     <span style="color:#2dd4a0">Teal cluster</span> = polygons community.<br>
+    <span style="color:#a78bfa">Purple cluster</span> = isolated orphaned file (no dependencies).<br>
     <span style="color:#f87171; font-weight: bold;">Red pulsing nodes</span> = bugs detected.
   </div>
   <div class="file-input-wrapper">
@@ -126,7 +127,7 @@
     <strong>Communities</strong>
     <label><input type="checkbox" class="comm-filter" value="mathsquiz" checked> mathsquiz</label>
     <label><input type="checkbox" class="comm-filter" value="polygons" checked> polygons</label>
-    <label><input type="checkbox" class="comm-filter" value="unknown" checked> unknown</label>
+    <label><input type="checkbox" class="comm-filter" value="isolated" checked> isolated (mathsquiz-step1)</label>
   </div>
 
   <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -144,6 +145,7 @@
   <h3 style="margin-top:15px">Nodes (Community Tint)</h3>
   <div class="legend-item"><div class="legend-color" style="background:var(--tint-warm); border:1px solid #fff"></div> Mathsquiz (Warm)</div>
   <div class="legend-item"><div class="legend-color" style="background:var(--tint-cool); border:1px solid #fff"></div> Polygons (Cool)</div>
+  <div class="legend-item"><div class="legend-color" style="background:rgba(167, 139, 250, 0.4); border:1px solid #fff"></div> Isolated (orphaned)</div>
   <h3 style="margin-top:15px">Edges</h3>
   <div class="legend-item"><div class="legend-line" style="background:var(--edge-ext)"></div> Extracted</div>
   <div class="legend-item"><div class="legend-line" style="border-top:2px dashed var(--edge-inf)"></div> Inferred</div>
@@ -161,10 +163,18 @@
 <script>
 const canvas = document.getElementById('graphCanvas');
 const ctx = canvas.getContext('2d');
-let width = 1200;
-let height = 800;
+let width = window.innerWidth;
+let height = window.innerHeight;
 canvas.width = width;
 canvas.height = height;
+
+window.addEventListener('resize', () => {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+  if (typeof draw === 'function') draw();
+});
 
 // Viewport
 let transform = { x: 0, y: 0, scale: 1 };
@@ -179,7 +189,7 @@ let hoveredNode = null;
 
 // Filters
 let edgeFilters = new Set(['EXTRACTED', 'INFERRED', 'AMBIGUOUS']);
-let commFilters = new Set(['mathsquiz', 'polygons', 'unknown']);
+let commFilters = new Set(['mathsquiz', 'polygons', 'isolated']);
 
 function draw() {
   ctx.clearRect(0, 0, width, height);
@@ -209,10 +219,11 @@ function draw() {
   }
 
   // Draw Community Bounding Boxes
-  let comms = { mathsquiz: [], polygons: [] };
+  let comms = { mathsquiz: [], polygons: [], isolated: [] };
   activeNodes.forEach(n => {
     if (n.community === 'mathsquiz') comms.mathsquiz.push(n);
     else if (n.community === 'polygons') comms.polygons.push(n);
+    else if (n.community === 'isolated') comms.isolated.push(n);
   });
 
   for (let c in comms) {
@@ -225,10 +236,10 @@ function draw() {
       if (n.y > maxY) maxY = n.y;
     });
     
-    // Add 40px padding around bounding box (80px on bottom for mathsquiz)
+    // Add 40px padding around bounding box
     minX -= 40; minY -= 40;
     maxX += 40; 
-    maxY += (c === 'mathsquiz') ? 80 : 40;
+    maxY += 40;
     let w = maxX - minX;
     let h = maxY - minY;
     
@@ -238,19 +249,23 @@ function draw() {
     if (c === 'mathsquiz') {
       ctx.fillStyle = 'rgba(251, 146, 60, 0.15)';
       ctx.strokeStyle = 'rgba(251, 146, 60, 0.4)';
-    } else {
+    } else if (c === 'polygons') {
       ctx.fillStyle = 'rgba(45, 212, 160, 0.15)';
       ctx.strokeStyle = 'rgba(45, 212, 160, 0.4)';
+    } else {
+      ctx.fillStyle = 'rgba(167, 139, 250, 0.15)';
+      ctx.strokeStyle = 'rgba(167, 139, 250, 0.5)';
     }
     ctx.lineWidth = 2;
     ctx.fill();
     ctx.stroke();
     
     // Label
+    let labelText = c === 'isolated' ? 'mathsquiz-step1 (isolated)' : c;
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillStyle = c === 'mathsquiz' ? 'rgba(251, 146, 60, 0.9)' : 'rgba(45, 212, 160, 0.9)';
-    ctx.fillText(c, minX + 10, minY + 20);
+    ctx.fillStyle = c === 'mathsquiz' ? 'rgba(251, 146, 60, 0.9)' : (c === 'polygons' ? 'rgba(45, 212, 160, 0.9)' : 'rgba(167, 139, 250, 0.9)');
+    ctx.fillText(labelText, minX + 10, minY + 20);
   }
 
   // Draw Edges
@@ -288,6 +303,7 @@ function draw() {
     ctx.arc(n.x, n.y, r + 6, 0, Math.PI * 2);
     if (n.community === 'mathsquiz') ctx.fillStyle = 'rgba(251, 146, 60, 0.2)';
     else if (n.community === 'polygons') ctx.fillStyle = 'rgba(45, 212, 160, 0.2)';
+    else if (n.community === 'isolated') ctx.fillStyle = 'rgba(167, 139, 250, 0.2)';
     else ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.fill();
 
@@ -388,7 +404,8 @@ function initGraph(data) {
   
   nodes.forEach(n => {
     let str = (n.file_path || n.id).toLowerCase();
-    if (str.includes('mathsquiz')) n.community = 'mathsquiz';
+    if (str.includes('mathsquiz-step1')) n.community = 'isolated';
+    else if (str.includes('mathsquiz')) n.community = 'mathsquiz';
     else if (str.includes('polygons')) n.community = 'polygons';
 
     if (n.type === 'error') {
@@ -415,7 +432,7 @@ function initGraph(data) {
   
   // STATIC HIERARCHICAL LAYOUT
   const mathsquizCenterX = 550;
-  const centerY = 400;
+  const centerY = 350;
 
   // Center Hubs
   const centerId = "file:mathsquiz/mathsquiz-step2.py";
@@ -426,18 +443,19 @@ function initGraph(data) {
     "func:mathsquiz/mathsquiz-step2.py:ask_question",
     "func:mathsquiz/mathsquiz-step2.py:welcome_message",
     "func:mathsquiz/mathsquiz-step2.py:print_final_scores",
-    "file:mathsquiz/mathsquiz-step3.py",
-    "file:mathsquiz/mathsquiz-step1.py"
+    "file:mathsquiz/mathsquiz-step3.py"
   ];
   
   nodes.forEach(n => {
     if (n.type === 'error' && n.community === 'mathsquiz') {
-      n.x = 900; n.y = 150;
+      n.x = 750; n.y = 150;
     } else if (n.id === mathsquizPyId) {
-      n.x = 900; n.y = 400;
+      n.x = 750; n.y = 350;
     } else if (n.community === 'polygons') {
-      if (n.type === 'error') { n.x = 1050; n.y = 500; }
-      else { n.x = 1050; n.y = 350; }
+      if (n.type === 'error') { n.x = 950; n.y = 500; }
+      else { n.x = 950; n.y = 350; }
+    } else if (n.community === 'isolated') {
+      n.x = 450; n.y = 650;
     } else if (n.id === centerId) {
       n.x = mathsquizCenterX; n.y = centerY;
     } else {
@@ -445,8 +463,8 @@ function initGraph(data) {
       let idx = ring1Ids.indexOf(n.id);
       if (idx !== -1) {
         let angle = (idx / ring1Ids.length) * Math.PI * 2;
-        n.x = mathsquizCenterX + Math.cos(angle) * 180;
-        n.y = centerY + Math.sin(angle) * 180;
+        n.x = mathsquizCenterX + Math.cos(angle) * 140;
+        n.y = centerY + Math.sin(angle) * 140;
       }
     }
   });
@@ -455,11 +473,11 @@ function initGraph(data) {
   let remaining = nodes.filter(n => n.x === 0 && n.y === 0);
   remaining.forEach((n, i) => {
     let angle = (i / remaining.length) * Math.PI * 2 + 0.5;
-    n.x = mathsquizCenterX + Math.cos(angle) * 320;
-    n.y = centerY + Math.sin(angle) * 320;
+    n.x = mathsquizCenterX + Math.cos(angle) * 260;
+    n.y = centerY + Math.sin(angle) * 200;
   });
 
-  transform = { x: 0, y: 0, scale: 1 };
+  transform = { x: 50, y: 0, scale: 0.85 };
   
   // Initial draw + pulse loop
   draw();

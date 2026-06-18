@@ -3,8 +3,9 @@
 ## Communities
 | Community | Size | Cohesion | Top 3 Nodes |
 |---|---|---|---|
-| [[mathsquiz]] | 17 | 100% | [[mathsquiz-step2.py]], [[ask_question]], [[mathsquiz-step3.py]] |
+| [[mathsquiz]] | 15 | 100% | [[mathsquiz-step2.py]], [[ask_question]], [[mathsquiz-step3.py]] |
 | [[polygons]] | 2 | 100% | [[polygons.py]], [[error-polygons-syntax]] |
+| [[mathsquiz]] | 1 | 0% | [[mathsquiz-step1.py]] |
 
 ## Hubs
 | Hub Node | Degree |
@@ -25,6 +26,7 @@
 - [[hot]]
 - [[mathsquiz]]
 - [[polygons]]
+- [[mathsquiz]]
 
 ## Detected Bugs
 - **PYTHON_2_MIGRATION_ISSUE** (BugSeverity.CRITICAL): Syntax issue found: SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)? (<unknown>, line 3)

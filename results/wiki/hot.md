@@ -1,5 +1,5 @@
 # Hot Nodes — Top Architectural Hubs
-_Generated: 2026-06-18T08:53:32+00:00_
+_Generated: 2026-06-18T21:00:01+00:00_
 
 | Rank | Node | Type | Degree |
 |------|------|------|--------|

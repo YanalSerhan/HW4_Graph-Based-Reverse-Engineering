@@ -37,3 +37,8 @@ fail_under = 85
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.18",
+]

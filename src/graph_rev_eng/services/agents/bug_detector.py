@@ -153,14 +153,22 @@ class ArchitecturalBugDetector(BaseAgent, LLMStubMixin):
         bugs: list[ArchitecturalBug] = []
         
         target_node_id = None
+        target_path_str = None
         for node in graph.nodes.values():
-            if node.file_path and "mathsquiz.py" in node.file_path and node.node_type in ("file", "module", "error"):
+            if node.file_path and node.file_path.endswith("mathsquiz.py"):
                 target_node_id = node.node_id
+                target_path_str = node.file_path
                 break
                 
-        mathsquiz_path = Path("data/broken-python/mathsquiz/mathsquiz.py")
-        if not mathsquiz_path.exists():
+        if not target_path_str:
             return bugs
+            
+        mathsquiz_path = Path(target_path_str)
+        if not mathsquiz_path.exists():
+            # Fallback for relative paths in graph depending on CWD
+            mathsquiz_path = Path("data/broken-python") / target_path_str
+            if not mathsquiz_path.exists():
+                return bugs
             
         content = mathsquiz_path.read_text(encoding="utf-8")
         
