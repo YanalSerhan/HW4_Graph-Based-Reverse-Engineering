@@ -1,0 +1,301 @@
+{
+  "nodes": [
+    {
+      "id": "file:mathsquiz/mathsquiz-step1.py",
+      "label": "mathsquiz-step1.py",
+      "type": "module",
+      "file_path": "mathsquiz/mathsquiz-step1.py",
+      "line_number": 0
+    },
+    {
+      "id": "file:mathsquiz/mathsquiz-step2.py",
+      "label": "mathsquiz-step2.py",
+      "type": "module",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 0
+    },
+    {
+      "id": "func:mathsquiz/mathsquiz-step2.py:welcome_message",
+      "label": "welcome_message",
+      "type": "function",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 3
+    },
+    {
+      "id": "func:mathsquiz/mathsquiz-step2.py:ask_question",
+      "label": "ask_question",
+      "type": "function",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 8
+    },
+    {
+      "id": "func:mathsquiz/mathsquiz-step2.py:print_final_scores",
+      "label": "print_final_scores",
+      "type": "function",
+      "file_path": "mathsquiz/mathsquiz-step2.py",
+      "line_number": 23
+    },
+    {
+      "id": "call:welcome_message",
+      "label": "welcome_message",
+      "type": "function",
+      "file_path": "",
+      "line_number": 0
+    },
+    {
+      "id": "call:print_final_scores",
+      "label": "print_final_scores",
+      "type": "function",
+      "file_path": "",
+      "line_number": 0
+    },
+    {
+      "id": "call:ask_question",
+      "label": "ask_question",
+      "type": "function",
+      "file_path": "",
+      "line_number": 0
+    },
+    {
+      "id": "file:mathsquiz/mathsquiz-step3.py",
+      "label": "mathsquiz-step3.py",
+      "type": "module",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 0
+    },
+    {
+      "id": "module:random",
+      "label": "random",
+      "type": "module",
+      "file_path": "",
+      "line_number": 0
+    },
+    {
+      "id": "func:mathsquiz/mathsquiz-step3.py:welcome_message",
+      "label": "welcome_message",
+      "type": "function",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 4
+    },
+    {
+      "id": "func:mathsquiz/mathsquiz-step3.py:ask_question",
+      "label": "ask_question",
+      "type": "function",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 9
+    },
+    {
+      "id": "func:mathsquiz/mathsquiz-step3.py:print_final_scores",
+      "label": "print_final_scores",
+      "type": "function",
+      "file_path": "mathsquiz/mathsquiz-step3.py",
+      "line_number": 27
+    },
+    {
+      "id": "call:randint",
+      "label": "randint",
+      "type": "function",
+      "file_path": "",
+      "line_number": 0
+    },
+    {
+      "id": "file:mathsquiz/mathsquiz.py",
+      "label": "mathsquiz.py",
+      "type": "module",
+      "file_path": "mathsquiz/mathsquiz.py",
+      "line_number": 0
+    },
+    {
+      "id": "file:polygons/polygons.py",
+      "label": "polygons.py",
+      "type": "module",
+      "file_path": "polygons/polygons.py",
+      "line_number": 0
+    },
+    {
+      "id": "error:polygons/polygons.py:syntax",
+      "label": "SyntaxError: invalid syntax (<unknown>, line 29)",
+      "type": "error",
+      "file_path": "polygons/polygons.py",
+      "line_number": 0
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "func:mathsquiz/mathsquiz-step2.py:welcome_message",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "func:mathsquiz/mathsquiz-step2.py:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "func:mathsquiz/mathsquiz-step2.py:print_final_scores",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:welcome_message",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:print_final_scores",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step2.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "module:random",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "imports"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "func:mathsquiz/mathsquiz-step3.py:welcome_message",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "func:mathsquiz/mathsquiz-step3.py:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "func:mathsquiz/mathsquiz-step3.py:print_final_scores",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "contains"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:welcome_message",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:print_final_scores",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:randint",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:randint",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:mathsquiz/mathsquiz-step3.py",
+      "target": "call:ask_question",
+      "type": "EXTRACTED",
+      "confidence": 1.0,
+      "label": "calls"
+    },
+    {
+      "source": "file:polygons/polygons.py",
+      "target": "error:polygons/polygons.py:syntax",
+      "type": "AMBIGUOUS",
+      "confidence": 1.0,
+      "label": "has_error"
+    }
+  ],
+  "hyperedges": []
+}
