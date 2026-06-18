@@ -1,6 +1,6 @@
 # Community: mathsquiz
 
-**Size:** 16 nodes
+**Size:** 17 nodes
 **Cohesion:** 100%
 
 ## Members
@@ -19,6 +19,7 @@
 - [[print_final_scores]] (Degree: 1)
 - [[mathsquiz.py]] (Degree: 1)
 - [[error-mathsquiz-syntax]] (Degree: 1)
+- [[mathsquiz_fixed.py]] (Degree: 0)
 - [[mathsquiz-step1.py]] (Degree: 0)
 
 ## Navigation

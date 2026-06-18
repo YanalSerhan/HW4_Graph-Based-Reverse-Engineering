@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Visualization — Graph Knowledge System</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2e3d;
+    --text: #e4e6ed;
+    --text-dim: #8b8fa3;
+    
+    --color-module: #60a5fa;
+    --color-func: #a78bfa;
+    --color-error: #f87171;
+    
+    --tint-warm: rgba(251, 146, 60, 0.4);
+    --tint-cool: rgba(45, 212, 160, 0.4);
+    
+    --edge-ext: #34d399;
+    --edge-inf: #a78bfa;
+    --edge-amb: #f87171;
+  }
+  
+  body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+  }
+  
+  canvas { display: block; width: 100vw; height: 100vh; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+
+  /* UI Panel */
+  .panel {
+    position: absolute; top: 20px; left: 20px;
+    background: rgba(26, 29, 39, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px; width: 320px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  
+  .panel h2 { margin: 0 0 15px 0; font-size: 1.2rem; }
+  
+  .btn {
+    background: #3b3f54; border: none; color: #fff;
+    padding: 8px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 0.85rem; margin-right: 5px; margin-bottom: 10px;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: #4b506a; }
+  .btn-primary { background: #6c72cb; }
+  .btn-primary:hover { background: #5b5fc7; }
+  
+  .file-input-wrapper { margin-bottom: 20px; }
+  
+  .filter-group { margin-bottom: 15px; }
+  .filter-group label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px;
+    cursor: pointer;
+  }
+  
+  /* Legend */
+  .legend {
+    position: absolute; bottom: 20px; right: 20px;
+    background: rgba(26, 29, 39, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 15px;
+    font-size: 0.8rem;
+  }
+  .legend h3 { margin: 0 0 10px 0; font-size: 0.9rem; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .legend-color { width: 12px; height: 12px; border-radius: 50%; }
+  .legend-line { width: 20px; height: 2px; }
+  
+  /* Tooltip */
+  #tooltip {
+    position: absolute; background: rgba(15, 17, 23, 0.95);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 15px; pointer-events: none;
+    font-size: 0.85rem; opacity: 0; transition: opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 100;
+  }
+  .tt-label { font-weight: bold; margin-bottom: 5px; color: #fff; }
+  .tt-detail { color: var(--text-dim); margin-bottom: 3px; }
+  .tt-detail span { color: var(--text); }
+</style>
+</head>
+<body>
+
+<canvas id="graphCanvas"></canvas>
+
+<div class="panel">
+  <h2>Interactive Graph</h2>
+  <div class="file-input-wrapper">
+    <label class="btn btn-primary">
+      📂 Load graph.json
+      <input type="file" id="fileInput" accept=".json" style="display:none">
+    </label>
+  </div>
+  
+  <div class="filter-group">
+    <strong>Edges</strong>
+    <label><input type="checkbox" class="edge-filter" value="EXTRACTED" checked> Extracted</label>
+    <label><input type="checkbox" class="edge-filter" value="INFERRED" checked> Inferred</label>
+    <label><input type="checkbox" class="edge-filter" value="AMBIGUOUS" checked> Ambiguous</label>
+  </div>
+
+  <div class="filter-group">
+    <strong>Communities</strong>
+    <label><input type="checkbox" class="comm-filter" value="mathsquiz" checked> mathsquiz</label>
+    <label><input type="checkbox" class="comm-filter" value="polygons" checked> polygons</label>
+    <label><input type="checkbox" class="comm-filter" value="unknown" checked> unknown</label>
+  </div>
+
+  <div style="display: flex; gap: 10px; margin-top: 20px;">
+    <button class="btn" id="btnZoomIn">➕ Zoom</button>
+    <button class="btn" id="btnZoomOut">➖ Zoom</button>
+    <button class="btn" id="btnReset">Reset Selection</button>
+  </div>
+</div>
+
+<div class="legend">
+  <h3>Nodes (Type)</h3>
+  <div class="legend-item"><div class="legend-color" style="background:var(--color-module)"></div> Module</div>
+  <div class="legend-item"><div class="legend-color" style="background:var(--color-func)"></div> Function</div>
+  <div class="legend-item"><div class="legend-color" style="background:var(--color-error)"></div> Error</div>
+  <h3 style="margin-top:15px">Nodes (Community Tint)</h3>
+  <div class="legend-item"><div class="legend-color" style="background:var(--tint-warm); border:1px solid #fff"></div> Mathsquiz (Warm)</div>
+  <div class="legend-item"><div class="legend-color" style="background:var(--tint-cool); border:1px solid #fff"></div> Polygons (Cool)</div>
+  <h3 style="margin-top:15px">Edges</h3>
+  <div class="legend-item"><div class="legend-line" style="background:var(--edge-ext)"></div> Extracted</div>
+  <div class="legend-item"><div class="legend-line" style="border-top:2px dashed var(--edge-inf)"></div> Inferred</div>
+  <div class="legend-item"><div class="legend-line" style="border-top:2px dashed var(--edge-amb)"></div> Ambiguous</div>
+</div>
+
+<div id="tooltip">
+  <div class="tt-label" id="ttLabel"></div>
+  <div class="tt-detail">Type: <span id="ttType"></span></div>
+  <div class="tt-detail">Community: <span id="ttComm"></span></div>
+  <div class="tt-detail">Degree: <span id="ttDegree"></span></div>
+  <div class="tt-detail">File: <span id="ttFile"></span></div>
+</div>
+
+<script>
+const canvas = document.getElementById('graphCanvas');
+const ctx = canvas.getContext('2d');
+let width = window.innerWidth;
+let height = window.innerHeight;
+canvas.width = width;
+canvas.height = height;
+
+window.addEventListener('resize', () => {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+});
+
+// Viewport
+let transform = { x: width/2, y: height/2, scale: 1 };
+let isPanning = false;
+let startPan = { x:0, y:0 };
+
+// Graph Data
+let nodes = [];
+let edges = [];
+let selectedNode = null;
+let hoveredNode = null;
+
+// Configs
+const K_REPEL = 4000;
+const K_SPRING = 0.05;
+const SPRING_LEN = 150;
+const DAMPING = 0.85;
+
+// Filters
+let edgeFilters = new Set(['EXTRACTED', 'INFERRED', 'AMBIGUOUS']);
+let commFilters = new Set(['mathsquiz', 'polygons', 'unknown']);
+
+document.querySelectorAll('.edge-filter').forEach(cb => {
+  cb.addEventListener('change', e => {
+    if (e.target.checked) edgeFilters.add(e.target.value);
+    else edgeFilters.delete(e.target.value);
+  });
+});
+document.querySelectorAll('.comm-filter').forEach(cb => {
+  cb.addEventListener('change', e => {
+    if (e.target.checked) commFilters.add(e.target.value);
+    else commFilters.delete(e.target.value);
+  });
+});
+
+document.getElementById('btnZoomIn').onclick = () => transform.scale *= 1.2;
+document.getElementById('btnZoomOut').onclick = () => transform.scale /= 1.2;
+document.getElementById('btnReset').onclick = () => { selectedNode = null; };
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      initGraph(data);
+    } catch(err) {
+      alert("Error loading JSON: " + err);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Auto-load for testing
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('load')) {
+  fetch(urlParams.get('load'))
+    .then(r => r.json())
+    .then(data => initGraph(data))
+    .catch(err => console.error("Error fetching graph:", err));
+}
+
+function initGraph(data) {
+  let rawNodes = data.nodes || Object.values(data.nodes || {});
+  let rawEdges = data.edges || [];
+  
+  nodes = rawNodes.map(n => ({
+    id: n.id || n.node_id,
+    label: n.label,
+    type: (n.type || n.node_type || "unknown").toLowerCase(),
+    file_path: n.file_path || "",
+    degree: 0,
+    x: (Math.random() - 0.5) * width,
+    y: (Math.random() - 0.5) * height,
+    vx: 0, vy: 0,
+    community: 'unknown'
+  }));
+  
+  nodes.forEach(n => {
+    let str = (n.file_path || n.id).toLowerCase();
+    if (str.includes('mathsquiz')) n.community = 'mathsquiz';
+    else if (str.includes('polygons')) n.community = 'polygons';
+  });
+
+  edges = rawEdges.map(e => {
+    let sId = e.source || e.source_id;
+    let tId = e.target || e.target_id;
+    let sNode = nodes.find(n => n.id === sId);
+    let tNode = nodes.find(n => n.id === tId);
+    if (sNode && tNode) {
+      sNode.degree++;
+      tNode.degree++;
+    }
+    return {
+      source: sNode,
+      target: tNode,
+      type: (e.type || e.edge_type || "EXTRACTED").toUpperCase()
+    };
+  }).filter(e => e.source && e.target);
+  
+  transform = { x: width/2, y: height/2, scale: 1 };
+}
+
+// Interaction
+let dragNode = null;
+canvas.addEventListener('mousedown', e => {
+  const pos = getMousePos(e);
+  dragNode = getNodeAt(pos.x, pos.y);
+  if (dragNode) {
+    selectedNode = dragNode;
+  } else {
+    isPanning = true;
+    startPan = { x: e.clientX - transform.x, y: e.clientY - transform.y };
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (isPanning) {
+    transform.x = e.clientX - startPan.x;
+    transform.y = e.clientY - startPan.y;
+    return;
+  }
+  
+  const pos = getMousePos(e);
+  if (dragNode) {
+    dragNode.x = pos.x;
+    dragNode.y = pos.y;
+    dragNode.vx = 0; dragNode.vy = 0;
+  } else {
+    hoveredNode = getNodeAt(pos.x, pos.y);
+    const tt = document.getElementById('tooltip');
+    if (hoveredNode) {
+      tt.style.opacity = 1;
+      tt.style.left = (e.clientX + 15) + 'px';
+      tt.style.top = (e.clientY + 15) + 'px';
+      document.getElementById('ttLabel').innerText = hoveredNode.label;
+      document.getElementById('ttType').innerText = hoveredNode.type;
+      document.getElementById('ttComm').innerText = hoveredNode.community;
+      document.getElementById('ttDegree').innerText = hoveredNode.degree;
+      document.getElementById('ttFile').innerText = hoveredNode.file_path;
+    } else {
+      tt.style.opacity = 0;
+    }
+  }
+});
+
+canvas.addEventListener('mouseup', () => { dragNode = null; isPanning = false; });
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const zoom = Math.exp(e.deltaY * -0.001);
+  transform.scale *= zoom;
+});
+
+function getMousePos(e) {
+  return {
+    x: (e.clientX - transform.x) / transform.scale,
+    y: (e.clientY - transform.y) / transform.scale
+  };
+}
+
+function getNodeAt(x, y) {
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    let n = nodes[i];
+    if (!commFilters.has(n.community)) continue;
+    let r = Math.max(5, Math.min(25, n.degree * 2));
+    let dx = x - n.x;
+    let dy = y - n.y;
+    if (dx*dx + dy*dy <= r*r) return n;
+  }
+  return null;
+}
+
+function physics() {
+  let activeNodes = nodes.filter(n => commFilters.has(n.community));
+  let activeEdges = edges.filter(e => 
+    edgeFilters.has(e.type) && 
+    commFilters.has(e.source.community) && 
+    commFilters.has(e.target.community)
+  );
+
+  for (let i=0; i<activeNodes.length; i++) {
+    for (let j=i+1; j<activeNodes.length; j++) {
+      let n1 = activeNodes[i];
+      let n2 = activeNodes[j];
+      let dx = n1.x - n2.x; let dy = n1.y - n2.y;
+      let dSq = dx*dx + dy*dy;
+      if (dSq === 0) dSq = 0.1;
+      if (dSq < 200000) {
+        let f = K_REPEL / dSq;
+        n1.vx += f * dx; n1.vy += f * dy;
+        n2.vx -= f * dx; n2.vy -= f * dy;
+      }
+    }
+  }
+
+  activeEdges.forEach(e => {
+    let dx = e.target.x - e.source.x;
+    let dy = e.target.y - e.source.y;
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist === 0) dist = 0.1;
+    let f = (dist - SPRING_LEN) * K_SPRING;
+    let fx = (dx / dist) * f;
+    let fy = (dy / dist) * f;
+    e.source.vx += fx; e.source.vy += fy;
+    e.target.vx -= fx; e.target.vy -= fy;
+  });
+
+  let maxSpeed = 15;
+  activeNodes.forEach(n => {
+    if (n === dragNode) return;
+    
+    // Center gravity to stop infinite drifting
+    n.vx += -n.x * 0.005;
+    n.vy += -n.y * 0.005;
+
+    n.vx *= DAMPING; n.vy *= DAMPING;
+    
+    // Cap maximum speed
+    let speed = Math.sqrt(n.vx*n.vx + n.vy*n.vy);
+    if (speed > maxSpeed) {
+      n.vx = (n.vx / speed) * maxSpeed;
+      n.vy = (n.vy / speed) * maxSpeed;
+    }
+
+    // Stop completely if almost still to prevent jitter
+    if (speed < 0.05) { n.vx = 0; n.vy = 0; }
+
+    n.x += n.vx; n.y += n.vy;
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, width, height);
+  ctx.save();
+  ctx.translate(transform.x, transform.y);
+  ctx.scale(transform.scale, transform.scale);
+
+  let activeNodes = nodes.filter(n => commFilters.has(n.community));
+  let activeEdges = edges.filter(e => 
+    edgeFilters.has(e.type) && 
+    commFilters.has(e.source.community) && 
+    commFilters.has(e.target.community)
+  );
+
+  // Highlighting logic
+  let highlightNodes = new Set();
+  let highlightEdges = new Set();
+  if (selectedNode) {
+    highlightNodes.add(selectedNode);
+    activeEdges.forEach(e => {
+      if (e.source === selectedNode || e.target === selectedNode) {
+        highlightEdges.add(e);
+        highlightNodes.add(e.source);
+        highlightNodes.add(e.target);
+      }
+    });
+  }
+
+  // Draw Edges
+  activeEdges.forEach(e => {
+    if (selectedNode && !highlightEdges.has(e)) {
+      ctx.globalAlpha = 0.1;
+    } else {
+      ctx.globalAlpha = 0.6;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(e.source.x, e.source.y);
+    ctx.lineTo(e.target.x, e.target.y);
+    
+    if (e.type === 'EXTRACTED') { ctx.strokeStyle = '#34d399'; ctx.setLineDash([]); }
+    else if (e.type === 'INFERRED') { ctx.strokeStyle = '#a78bfa'; ctx.setLineDash([5, 5]); }
+    else { ctx.strokeStyle = '#f87171'; ctx.setLineDash([5, 5]); }
+    
+    ctx.lineWidth = selectedNode && highlightEdges.has(e) ? 3 : 1.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+  });
+
+  ctx.setLineDash([]);
+
+  // Draw Nodes
+  activeNodes.forEach(n => {
+    let isDimmed = selectedNode && !highlightNodes.has(n);
+    ctx.globalAlpha = isDimmed ? 0.15 : 1.0;
+
+    let r = Math.max(5, Math.min(25, n.degree * 2));
+    
+    // Community Tint Halo
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r + 6, 0, Math.PI * 2);
+    if (n.community === 'mathsquiz') ctx.fillStyle = 'rgba(251, 146, 60, 0.2)';
+    else if (n.community === 'polygons') ctx.fillStyle = 'rgba(45, 212, 160, 0.2)';
+    else ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fill();
+
+    // Node Core
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    if (n.type === 'module') ctx.fillStyle = '#60a5fa';
+    else if (n.type === 'function') ctx.fillStyle = '#a78bfa';
+    else if (n.type === 'error') ctx.fillStyle = '#f87171';
+    else ctx.fillStyle = '#9ca3af';
+    ctx.fill();
+    
+    if (n === hoveredNode || n === selectedNode) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
+    // Label
+    if (!isDimmed && (r > 10 || transform.scale > 1.5 || n === hoveredNode)) {
+      ctx.fillStyle = '#e4e6ed';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.label, n.x, n.y + r + 15);
+    }
+  });
+
+  ctx.restore();
+}
+
+function loop() {
+  physics();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>

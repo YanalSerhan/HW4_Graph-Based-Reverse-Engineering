@@ -109,6 +109,10 @@ else if score = 10:
 ## Root Cause Analysis
 The following architectural and logic issues were detected:
 
+### PYTHON_2_MIGRATION_ISSUE
+- **Description:** Syntax issue found: SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)? (<unknown>, line 3)
+- **Fix / Recommendation:** Fix the syntax error to ensure modern Python compatibility.
+
 ### SYNTAX_ERROR
 - **Description:** Syntax issue found: SyntaxError: invalid syntax (<unknown>, line 29)
 - **Fix / Recommendation:** Fix the syntax error to ensure modern Python compatibility.

@@ -1,115 +1,113 @@
 """
 CLI entry point for the Reverse Engineering SDK.
-
-No business logic lives here — all calls go through ReverseEngineeringSDK.
-Follows Nielsen's heuristic #5 (error prevention) with clear flag descriptions
-and #9 (help and documentation) with rich --help output.
 """
-
-from __future__ import annotations
 
 import argparse
 import json
 import sys
+import subprocess
 from pathlib import Path
+from dataclasses import asdict
 
+from graph_rev_eng.services.github_downloader import GitHubDownloaderAgent
+from graph_rev_eng.services.ast_parser import ASTGraphBuilder
+from graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
 
 def build_parser() -> argparse.ArgumentParser:
-    """Builds and returns the CLI argument parser."""
     parser = argparse.ArgumentParser(
-        prog="graph-rev-eng",
-        description=(
-            "AI-powered graph-based reverse engineering of Python codebases.\n"
-            "Uses Grphify + multi-agent analysis to extract architectural insights."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="AI-powered graph-based reverse engineering pipeline."
     )
     parser.add_argument(
         "--repo-url",
-        metavar="URL",
-        default="",
-        help="GitHub URL of the target repository to clone and analyse.",
+        required=True,
+        help="GitHub URL of the target repository to analyze.",
     )
     parser.add_argument(
         "--query",
-        metavar="TEXT",
-        default="",
-        help="Natural language query to route to the appropriate skill.",
-    )
-    parser.add_argument(
-        "--budget-tokens",
-        type=int,
-        default=8000,
-        metavar="N",
-        help="Maximum total tokens to use across all agent invocations. Default: 8000.",
+        default="What are the main architectural issues in this codebase?",
+        help="Natural language query for the agents.",
     )
     parser.add_argument(
         "--output-dir",
-        metavar="DIR",
         default="results",
-        help="Directory to write outputs (graph.json, wiki, report). Default: results/.",
-    )
-    parser.add_argument(
-        "--compact",
-        action="store_true",
-        help="Trigger /compact mid-session context summarisation before running agents.",
-    )
-    parser.add_argument(
-        "--graph-path",
-        metavar="FILE",
-        default="",
-        help="Path to an existing graph.json (skips Grphify scan).",
+        help="Directory to write outputs (e.g. graph.json). Default: results/",
     )
     return parser
 
-
 def main() -> None:
-    """Parses CLI arguments and delegates to the ReverseEngineeringSDK."""
     parser = build_parser()
     args = parser.parse_args()
 
-    # Late import keeps startup fast and avoids circular-import risks at module level
-    from graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
+    # 1. Clone the repo
+    print(f"\n[1/4] Cloning repository: {args.repo_url}")
+    downloader = GitHubDownloaderAgent()
+    repo_path = downloader.run(args.repo_url)
+    print(f"      Cloned to: {repo_path}")
 
+    # 2. Run AST parser -> graph.json
+    print(f"\n[2/4] Running AST Parser to build architectural graph...")
+    graph = ASTGraphBuilder().build(repo_path)
+    
+    out_dir = Path(args.output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    graph_path = out_dir / "graph.json"
+    
+    nodes_json = []
+    for v in graph.nodes.values():
+        d = asdict(v)
+        d["id"] = d.pop("node_id")
+        d["type"] = d.pop("node_type")
+        nodes_json.append(d)
+        
+    edges_json = []
+    for e in graph.edges:
+        d = asdict(e)
+        d["source"] = d.pop("source_id")
+        d["target"] = d.pop("target_id")
+        d["type"] = d.pop("edge_type")
+        edges_json.append(d)
+
+    with open(graph_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "nodes": nodes_json,
+            "edges": edges_json,
+            "hyperedges": [],
+            "metadata": {}
+        }, f, indent=2)
+    print(f"      Saved graph to: {graph_path}")
+
+    # 3. Build Obsidian vault -> obsidian/
+    print(f"\n[3/4] Building Obsidian Vault...")
+    try:
+        # Run the existing script which we know works well
+        subprocess.run([sys.executable, "generate_obsidian.py"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"      Error generating Obsidian vault: {e}")
+
+    # 4. Run full AgentCrew pipeline
+    print(f"\n[4/4] Running AgentCrew pipeline...")
     sdk = ReverseEngineeringSDK()
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    report_path = out_dir / "final_report.md"
+    
+    pipeline_result = sdk.run_agents(
+        task=args.query,
+        github_url=args.repo_url,
+        graph_path=graph_path,
+        report_path=report_path,
+    )
 
-    if args.query:
-        result = sdk.route_skill(args.query)
-        if result.skill:
-            print(f"Skill matched: {result.skill.name} (confidence: {result.confidence:.0%})")
-            print(f"Matched triggers: {result.matched_triggers}")
-        else:
-            print("No skill matched the query.")
-        return
-
-    if args.repo_url or args.graph_path:
-        graph_path = Path(args.graph_path) if args.graph_path else None
-        graph_html_path = None
-        graph_report_path = None
-        if args.repo_url and not graph_path:
-            from graph_rev_eng.services.github_downloader import GitHubDownloaderAgent
-            agent = GitHubDownloaderAgent()
-            local_repo_path = agent.run(args.repo_url)
-            graph_path, graph_html_path, graph_report_path = sdk.run_grphify(str(local_repo_path))
-
-        pipeline_result = sdk.run_agents(
-            task="full-analysis",
-            github_url=args.repo_url,
-            graph_path=graph_path,
-            graph_html_path=graph_html_path,
-            graph_report_path=graph_report_path,
-            report_path=output_dir / "final_report.md",
-        )
-        print(json.dumps(pipeline_result.token_summary, indent=2))
-        print(f"Report: {pipeline_result.report_path}")
-        if pipeline_result.errors:
-            print("Errors:", pipeline_result.errors, file=sys.stderr)
-        return
-
-    parser.print_help()
-
+    # 5. Print Summary
+    print("\n" + "="*50)
+    print(" REVERSE ENGINEERING PIPELINE SUMMARY")
+    print("="*50)
+    print(f" Nodes found:          {len(graph.nodes)}")
+    print(f" Edges found:          {len(graph.edges)}")
+    print(f" Bugs detected:        {pipeline_result.bug_count}")
+    print(f" Output files written: {graph_path}, obsidian/ (vault), {report_path}")
+    print("\n Token Usage:")
+    for agent, tokens in pipeline_result.token_summary.items():
+        print(f"   - {agent}: {tokens}")
+    print("="*50)
 
 if __name__ == "__main__":
     main()
