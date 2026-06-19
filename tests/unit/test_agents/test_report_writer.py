@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from graph_rev_eng.constants import EDGE_TYPE_INFERRED
-from graph_rev_eng.services.agents.bug_detector import ArchitecturalBug, BugSeverity
-from graph_rev_eng.services.agents.code_inspector import InspectionResult, ValidationOutcome
+from graph_rev_eng.services.agents.bug_types import ArchitecturalBug, BugSeverity
 from graph_rev_eng.services.agents.graph_analyst import ArchitecturalInsight
+from graph_rev_eng.services.agents.inspector_helpers import InspectionResult, ValidationOutcome
 from graph_rev_eng.services.agents.report_writer import ReportWriterAgent
 
 

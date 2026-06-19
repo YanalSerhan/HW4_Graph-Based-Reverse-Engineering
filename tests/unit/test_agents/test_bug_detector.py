@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from graph_rev_eng.constants import EDGE_TYPE_EXTRACTED
-from graph_rev_eng.services.agents.bug_detector import (
-    ArchitecturalBugDetector,
-    BugSeverity,
-)
+from graph_rev_eng.services.agents.bug_detector import ArchitecturalBugDetector
+from graph_rev_eng.services.agents.bug_types import BugSeverity
 from graph_rev_eng.services.community_detector import Community, CommunityDetector
 from graph_rev_eng.services.graph_models import Graph, GraphEdge, GraphNode
 

@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from graph_rev_eng.services.crew import AgentCrew, PipelineConfig, PipelineResult
+from graph_rev_eng.services.crew import AgentCrew
+from graph_rev_eng.services.crew_types import PipelineConfig, PipelineResult
 
 
 class MockCloner:

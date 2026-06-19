@@ -16,36 +16,17 @@ Key mechanisms:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from enum import Enum
 from pathlib import Path
 
 from ..constants import DEFAULT_TOKEN_BUDGET
+from .context_helpers import build_skill_listing, compact_content, select_pages
+from .context_types import AssembledContext, FailureMode
 from .token_counter import TokenCounter
 
 logger = logging.getLogger(__name__)
 
 SKILL_LISTING_FRACTION = 0.15  # 15% of budget reserved for skill listing
 COMPACT_TRIGGER_RATIO = 0.80  # Trigger /compact when 80% of budget consumed
-
-
-class FailureMode(str, Enum):
-    """Failure modes for context assembly."""
-
-    NONE = "NONE"
-    OVERFLOW = "OVERFLOW"
-    CONTEXT_ROT = "CONTEXT_ROT"
-
-
-@dataclass
-class AssembledContext:
-    """Context package ready to pass to an agent."""
-
-    content: str
-    token_estimate: int
-    selected_pages: list[str]
-    dropped_skills: list[str] = field(default_factory=list)
-    was_compacted: bool = False
 
 
 class ContextBudgetManager:
@@ -81,10 +62,12 @@ class ContextBudgetManager:
         Critical rules and skills go at the edges; detail goes in the middle.
         """
         index_text = self._load_page("index.md")
-        selected_pages = self._select_pages(query, index_text)
+        selected_pages = select_pages(query, index_text)
         page_texts = [self._load_page(f"wiki/{page}.md") for page in selected_pages]
 
-        skills_text, dropped_skills = self._build_skill_listing(available_skills)
+        skills_text, dropped_skills = build_skill_listing(
+            available_skills, self._counter, self._skill_budget
+        )
 
         parts = []
         if critical_rules:
@@ -98,7 +81,7 @@ class ContextBudgetManager:
         tokens = self._counter.estimate_tokens(content)
 
         if tokens > self._budget:
-            content, tokens = self._compact(content, query)
+            content, tokens = compact_content(content, query, self._budget, self._counter)
 
         self._session_consumed += tokens
         failure_mode = self.detect_failure_mode(tokens)
@@ -153,63 +136,4 @@ class ContextBudgetManager:
             return path.read_text(encoding="utf-8")
         return f"[Page '{relative_path}' not found]"
 
-    def _select_pages(self, query: str, index_text: str) -> list[str]:
-        """
-        Selects 2–3 most relevant community pages by keyword overlap.
 
-        This is a lightweight bag-of-words match — sufficient for structural
-        queries and avoids needing a vector store in Phase 3.
-        """
-        query_tokens = set(query.lower().split())
-        community_lines = [ln for ln in index_text.splitlines() if "[[wiki/" in ln]
-        scored: list[tuple[str, int]] = []
-        for line in community_lines:
-            start = line.find("[[wiki/") + 7
-            end = line.find("]]", start)
-            page = line[start:end] if end > start else ""
-            if not page:
-                continue
-            overlap = sum(1 for tok in query_tokens if tok in line.lower())
-            scored.append((page, overlap))
-        scored.sort(key=lambda x: x[1], reverse=True)
-        return [page for page, _ in scored[:3]]
-
-    def _build_skill_listing(self, available_skills: list[str]) -> tuple[str, list[str]]:
-        """
-        Assembles the skill listing, dropping skills if budget overflows.
-
-        Returns (skill_text, dropped_skills) so the caller knows what was omitted.
-        """
-        included: list[str] = []
-        dropped: list[str] = []
-        budget_used = 0
-        for skill in available_skills:
-            skill_tokens = self._counter.estimate_tokens(skill)
-            if budget_used + skill_tokens <= self._skill_budget:
-                included.append(skill)
-                budget_used += skill_tokens
-            else:
-                dropped.append(skill)
-                logger.warning("Dropped skill due to budget overflow: %s", skill)
-        skills_text = "\n".join(f"- {s}" for s in included)
-        return skills_text, dropped
-
-    def _compact(self, content: str, query: str) -> tuple[str, int]:
-        """
-        Applies /compact: truncates content to fit within budget.
-
-        Keeps the first and last 20% of the content (position-aware) and
-        summarises the middle. Marks the result so callers know compaction ran.
-        """
-        budget_chars = self._budget * 4
-        if len(content) <= budget_chars:
-            return content, self._counter.estimate_tokens(content)
-        keep = budget_chars // 2
-        head = content[:keep]
-        tail = content[-keep:]
-        summary = (
-            "\n\n[/compact: middle section summarised to fit token budget. "
-            f"Query intent preserved: '{query[:80]}']\n\n"
-        )
-        compacted = head + summary + tail
-        return compacted, self._counter.estimate_tokens(compacted)

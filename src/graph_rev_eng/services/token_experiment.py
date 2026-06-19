@@ -18,10 +18,7 @@ def call_openai(prompt: str) -> tuple[int, int]:
         raise ValueError("LLM_API_KEY environment variable not set.")
 
     url = "https://api.openai.com/v1/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
     data = {
         "model": "gpt-4o-mini",
         "messages": [{"role": "user", "content": prompt}],
@@ -39,9 +36,10 @@ def call_openai(prompt: str) -> tuple[int, int]:
             out_toks = usage.get("completion_tokens", 0)
             return in_toks, out_toks
     except urllib.error.HTTPError as e:
-        err_msg = e.read().decode('utf-8')
+        err_msg = e.read().decode("utf-8")
         print(f"Error: {err_msg}")
         raise
+
 
 def main():
     query = "What are the main architectural issues in this codebase?"
@@ -89,13 +87,14 @@ def main():
         "|---|---|---|---|---|",
         f"| Naive RAG | {in_a} | {out_a} | {tot_a} | ${cost_a:.6f} |",
         f"| Graph-guided | {in_b} | {out_b} | {tot_b} | ${cost_b:.6f} |",
-        f"| Reduction | {red_in:.1f}% | {red_out:.1f}% | {red_tot:.1f}% | {red_cost:.1f}% |"
+        f"| Reduction | {red_in:.1f}% | {red_out:.1f}% | {red_tot:.1f}% | {red_cost:.1f}% |",
     ]
 
     out_path = Path("results/token_analysis.md")
     out_path.parent.mkdir(exist_ok=True)
     out_path.write_text("\n".join(results), encoding="utf-8")
     print(f"Results written to {out_path}")
+
 
 if __name__ == "__main__":
     main()

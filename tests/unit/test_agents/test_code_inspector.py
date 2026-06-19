@@ -11,9 +11,9 @@ from graph_rev_eng.constants import (
 )
 from graph_rev_eng.services.agents.code_inspector import (
     CodeInspectorAgent,
-    ValidationOutcome,
 )
 from graph_rev_eng.services.agents.graph_analyst import ArchitecturalInsight
+from graph_rev_eng.services.agents.inspector_helpers import ValidationOutcome, validate_edge
 from graph_rev_eng.services.community_detector import CommunityDetector
 from graph_rev_eng.services.graph_models import GraphEdge
 from graph_rev_eng.services.token_counter import TokenCounter
@@ -63,8 +63,8 @@ class TestCodeInspectorAgent:
         self, simple_graph, mock_repo_path, token_counter, mock_llm_call
     ):
         edge = GraphEdge("n3", "n4", EDGE_TYPE_AMBIGUOUS)
-        agent = _make_agent(mock_repo_path, token_counter, mock_llm_call)
-        outcome = agent.validate_edge(edge, simple_graph)
+        _make_agent(mock_repo_path, token_counter, mock_llm_call)
+        outcome = validate_edge(edge, simple_graph, mock_repo_path)
         assert outcome == ValidationOutcome.ESCALATED
 
     def test_validate_edge_extracted_skips_ast(
@@ -72,9 +72,9 @@ class TestCodeInspectorAgent:
     ):
         """EXTRACTED edges are not validated via AST — skip if no file."""
         edge = GraphEdge("n1", "n2", EDGE_TYPE_EXTRACTED)
-        agent = _make_agent(mock_repo_path, token_counter, mock_llm_call)
+        _make_agent(mock_repo_path, token_counter, mock_llm_call)
         # n1 has file_path src/module_a.py which doesn't exist in mock_repo — expect SKIPPED
-        outcome = agent.validate_edge(edge, simple_graph)
+        outcome = validate_edge(edge, simple_graph, mock_repo_path)
         assert outcome in {
             ValidationOutcome.SKIPPED,
             ValidationOutcome.CONFIRMED,
@@ -95,10 +95,10 @@ class TestCodeInspectorAgent:
         edge = simple_graph.edges[0]  # n1 → n2, EXTRACTED
         # Change to INFERRED for AST check
         edge.edge_type = EDGE_TYPE_INFERRED
-        agent = CodeInspectorAgent(
+        CodeInspectorAgent(
             repo_path=repo, token_counter=token_counter, llm_call=mock_llm_call
         )
-        outcome = agent.validate_edge(edge, simple_graph)
+        outcome = validate_edge(edge, simple_graph, repo)
         assert outcome == ValidationOutcome.CONFIRMED
 
     def test_empty_insights_returns_empty_results(

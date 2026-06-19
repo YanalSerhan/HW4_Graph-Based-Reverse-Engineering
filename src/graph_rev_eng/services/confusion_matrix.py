@@ -31,6 +31,7 @@ FACTS = [
     ("mathsquiz.py calls ask_question", False),
 ]
 
+
 def main():
     repo_path = Path("data/broken-python")
     graph_path = Path("results/graph.json")
@@ -61,7 +62,7 @@ def main():
         "# CodeInspectorAgent Confusion Matrix",
         "",
         "| Fact | Ground Truth | Agent Prediction | Result |",
-        "|---|---|---|---|"
+        "|---|---|---|---|",
     ]
 
     print("Evaluating 20 architectural facts...")
@@ -97,23 +98,26 @@ def main():
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0
     f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
-    results_md.extend([
-        "",
-        "## Metrics",
-        f"- **True Positives (TP):** {tp}",
-        f"- **False Positives (FP):** {fp}",
-        f"- **True Negatives (TN):** {tn}",
-        f"- **False Negatives (FN):** {fn}",
-        "",
-        f"- **Precision:** {precision:.2f}",
-        f"- **Recall:** {recall:.2f}",
-        f"- **F1 Score:** {f1:.2f}"
-    ])
+    results_md.extend(
+        [
+            "",
+            "## Metrics",
+            f"- **True Positives (TP):** {tp}",
+            f"- **False Positives (FP):** {fp}",
+            f"- **True Negatives (TN):** {tn}",
+            f"- **False Negatives (FN):** {fn}",
+            "",
+            f"- **Precision:** {precision:.2f}",
+            f"- **Recall:** {recall:.2f}",
+            f"- **F1 Score:** {f1:.2f}",
+        ]
+    )
 
     out_path = Path("results/confusion_matrix.md")
     out_path.parent.mkdir(exist_ok=True, parents=True)
     out_path.write_text("\n".join(results_md), encoding="utf-8")
     print(f"\nSaved confusion matrix to {out_path}")
+
 
 if __name__ == "__main__":
     main()

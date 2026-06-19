@@ -51,7 +51,7 @@ class OpenAILLM:
             url = "https://api.openai.com/v1/chat/completions"
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
+                "Authorization": f"Bearer {self.api_key}",
             }
             data = {
                 "model": self.model,
@@ -71,7 +71,7 @@ class OpenAILLM:
                     out_toks = usage.get("completion_tokens", 0)
                     return LLMResponse(text, self.model, in_toks, out_toks)
             except urllib.error.HTTPError as e:
-                err_msg = e.read().decode('utf-8')
+                err_msg = e.read().decode("utf-8")
                 logger.error("OpenAI API HTTPError: %s", err_msg)
                 raise
 

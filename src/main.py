@@ -35,6 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     return parser
 
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
@@ -69,12 +70,11 @@ def main() -> None:
         edges_json.append(d)
 
     with open(graph_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "nodes": nodes_json,
-            "edges": edges_json,
-            "hyperedges": [],
-            "metadata": {}
-        }, f, indent=2)
+        json.dump(
+            {"nodes": nodes_json, "edges": edges_json, "hyperedges": [], "metadata": {}},
+            f,
+            indent=2,
+        )
     print(f"      Saved graph to: {graph_path}")
 
     # 3. Build Obsidian vault -> obsidian/
@@ -98,9 +98,9 @@ def main() -> None:
     )
 
     # 5. Print Summary
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print(" REVERSE ENGINEERING PIPELINE SUMMARY")
-    print("="*50)
+    print("=" * 50)
     print(f" Nodes found:          {len(graph.nodes)}")
     print(f" Edges found:          {len(graph.edges)}")
     print(f" Bugs detected:        {pipeline_result.bug_count}")
@@ -108,7 +108,8 @@ def main() -> None:
     print("\n Token Usage:")
     for agent, tokens in pipeline_result.token_summary.items():
         print(f"   - {agent}: {tokens}")
-    print("="*50)
+    print("=" * 50)
+
 
 if __name__ == "__main__":
     main()

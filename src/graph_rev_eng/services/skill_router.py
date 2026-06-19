@@ -22,36 +22,17 @@ SKILL.md format expected:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from pathlib import Path
 
 import yaml  # pyyaml
+
+from .skill_types import RoutingResult, Skill
 
 logger = logging.getLogger(__name__)
 
 SKILLS_DIR = Path("skills")
 MIN_MATCH_SCORE = 1  # At least one trigger word must match
 
-
-@dataclass
-class Skill:
-    """A parsed SKILL.md with its metadata and execution body."""
-
-    name: str
-    triggers: list[str]
-    boundaries: str
-    routing_subgraph: str
-    execution_body: str
-    source_path: Path
-
-
-@dataclass
-class RoutingResult:
-    """Result of a SkillRouter.route() call."""
-
-    skill: Skill | None
-    confidence: float  # 0.0 – 1.0
-    matched_triggers: list[str]
 
 
 class SkillRouter:

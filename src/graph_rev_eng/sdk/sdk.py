@@ -10,7 +10,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..services.community_detector import CommunityDetector
-from ..services.crew import AgentCrew, PipelineConfig, PipelineResult
+from ..services.crew import AgentCrew
+from ..services.crew_types import PipelineConfig, PipelineResult
 from ..services.github_downloader import GitCloner
 from ..services.graph_loader import GraphLoader
 from ..services.graph_models import Graph
@@ -18,6 +19,7 @@ from ..services.index_builder import IndexBuilder
 from ..services.skill_router import RoutingResult, SkillRouter
 from ..services.token_counter import TokenCounter
 from ..shared.config import ConfigManager
+from .grphify_runner import run_grphify_cli
 
 RESULTS_DIR = Path("results")
 WIKI_DIR = RESULTS_DIR / "wiki"
@@ -42,68 +44,7 @@ class ReverseEngineeringSDK:
 
         In production, shells out to `grphify scan <repo_path>`.
         """
-        import subprocess
-
-        output_path = RESULTS_DIR / "graph.json"
-        html_path = RESULTS_DIR / "graph.html"
-        report_path = RESULTS_DIR / "GRAPH_REPORT.md"
-        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-        try:
-            subprocess.run(
-                ["grphify", "scan", repo_path, "--output", str(output_path)],
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=600,
-            )
-        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-            # Grphify not installed or failed — fall back to internal AST parser
-            import json
-            import logging
-            from dataclasses import asdict
-
-            from ..services.ast_parser import ASTGraphBuilder
-
-            logging.getLogger(__name__).warning(
-                "Grphify unavailable (%s). Falling back to internal AST parser.", exc
-            )
-
-            graph = ASTGraphBuilder().build(Path(repo_path))
-
-            nodes_json = []
-            for v in graph.nodes.values():
-                d = asdict(v)
-                d["id"] = d.pop("node_id")
-                d["type"] = d.pop("node_type")
-                nodes_json.append(d)
-
-            edges_json = []
-            for e in graph.edges:
-                d = asdict(e)
-                d["source"] = d.pop("source_id")
-                d["target"] = d.pop("target_id")
-                d["type"] = d.pop("edge_type")
-                edges_json.append(d)
-
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump({
-                    "nodes": nodes_json,
-                    "edges": edges_json,
-                    "hyperedges": [],
-                    "metadata": {}
-                }, f, indent=2)
-
-        # Ensure dummy outputs if they don't exist, to satisfy agents in mock environments
-        if not html_path.exists():
-            html_path.write_text(
-                "<html><body>Mock Graph HTML Metadata</body></html>", encoding="utf-8"
-            )
-        if not report_path.exists():
-            report_path.write_text(
-                "# Mock GRAPH_REPORT\nNo actual Grphify output available.", encoding="utf-8"
-            )
-
-        return output_path, html_path, report_path
+        return run_grphify_cli(repo_path, RESULTS_DIR)
 
     def load_graph(self, graph_path: Path) -> Graph:
         """Loads and validates a Graph from the given graph.json path."""
