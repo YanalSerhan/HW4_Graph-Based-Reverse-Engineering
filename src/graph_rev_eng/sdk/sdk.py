@@ -89,8 +89,10 @@ class ReverseEngineeringSDK:
             gatekeeper = ApiGatekeeper(rl_config)
 
             api_key = self._config.get_api_key("LLM_API_KEY")
+            if not api_key:
+                raise ValueError("LLM_API_KEY must be provided via config or environment.")
             llm_call = GatekeeperLangchainLLM(
-                gatekeeper=gatekeeper, openai_api_key=api_key or "STUB_KEY"
+                gatekeeper=gatekeeper, openai_api_key=api_key
             )
 
         config = PipelineConfig(

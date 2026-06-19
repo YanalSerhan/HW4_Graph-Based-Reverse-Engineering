@@ -11,6 +11,7 @@ from typing import Any
 from langchain_core.language_models.llms import LLM
 from pydantic import Field
 
+from ..shared.config import ConfigManager
 from ..shared.gatekeeper import ApiGatekeeper
 
 logger = logging.getLogger(__name__)
@@ -58,7 +59,7 @@ class OpenAILLM:
             return f"[STUB] Missing API Key. Prompt length: {len(prompt)}"
 
         def _api_call() -> LLMResponse:
-            url = "https://api.openai.com/v1/chat/completions"
+            url = ConfigManager.get_instance().get_api_url()
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.api_key}",

@@ -1,24 +1,19 @@
 import contextlib
 import json
-import os
 import urllib.error
 import urllib.request
 from pathlib import Path
 
+from ..shared.config import ConfigManager
+
 
 def call_openai(prompt: str) -> tuple[int, int]:
-    api_key = os.environ.get("LLM_API_KEY")
-    if not api_key:
-        env_path = Path(".env")
-        if env_path.exists():
-            for line in env_path.read_text().splitlines():
-                if line.startswith("LLM_API_KEY="):
-                    api_key = line.split("=", 1)[1].strip().strip('"').strip("'")
-                    break
+    config = ConfigManager.get_instance()
+    api_key = config.get_api_key("LLM_API_KEY")
     if not api_key:
         raise ValueError("LLM_API_KEY environment variable not set.")
 
-    url = "https://api.openai.com/v1/chat/completions"
+    url = config.get_api_url()
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
     data = {
         "model": "gpt-4o-mini",

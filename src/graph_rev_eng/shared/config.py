@@ -72,3 +72,7 @@ class ConfigManager:
     def get_api_key(self, key_name: str) -> str:
         """Retrieves an API key from the environment. Throws an error if empty or missing."""
         return os.environ.get(key_name, "")
+
+    def get_api_url(self) -> str:
+        """Returns the configured API URL."""
+        return str(self._setup_data.get("api_url", "https://api.openai.com/v1/chat/completions"))
