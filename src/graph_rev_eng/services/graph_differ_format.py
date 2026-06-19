@@ -1,11 +1,14 @@
 """
 graph_differ_format.py — Markdown formatting for GraphDiff.
 """
-from .graph_differ import GraphDiff
+from typing import TYPE_CHECKING
 from .graph_models import Graph
 
+if TYPE_CHECKING:
+    from .graph_differ import GraphDiff
 
-def format_graph_diff(diff: GraphDiff, graph_before: Graph, graph_after: Graph) -> str:
+
+def format_graph_diff(diff: "GraphDiff", graph_before: Graph, graph_after: Graph) -> str:
     """Generates the Markdown representation of a graph diff."""
     md = [
         "# Architectural Graph Diff — Before vs After Bug Fix",
