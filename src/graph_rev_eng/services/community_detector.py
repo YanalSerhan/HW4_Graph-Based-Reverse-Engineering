@@ -58,7 +58,7 @@ class CommunityDetector:
         """
         parent = self._build_union_find(graph)
         groups = self._group_by_root(graph, parent)
-        
+
         # Group node_ids by dominant_label to merge communities, BUT isolated nodes stay separate
         label_to_nodes: dict[str, list[str]] = defaultdict(list)
         isolated_nodes: list[list[str]] = []
@@ -68,11 +68,10 @@ class CommunityDetector:
             else:
                 label = self._dominant_label(node_ids, graph)
                 label_to_nodes[label].extend(node_ids)
-            
+
         communities = []
-        cid = 0
         all_groups = list(label_to_nodes.values()) + isolated_nodes
-        for node_ids in all_groups:
+        for cid, node_ids in enumerate(all_groups):
             label = self._dominant_label(node_ids, graph)
             community = self._build_community(cid, node_ids, graph)
             community.dominant_label = label
@@ -80,7 +79,6 @@ class CommunityDetector:
             for nid in node_ids:
                 if nid in graph.nodes:
                     graph.nodes[nid].community_id = cid
-            cid += 1
         logger.info("Detected %d communities", len(communities))
         return communities
 

@@ -58,24 +58,25 @@ class ReverseEngineeringSDK:
             )
         except (FileNotFoundError, subprocess.CalledProcessError) as exc:
             # Grphify not installed or failed — fall back to internal AST parser
-            import logging
             import json
+            import logging
             from dataclasses import asdict
+
             from ..services.ast_parser import ASTGraphBuilder
 
             logging.getLogger(__name__).warning(
                 "Grphify unavailable (%s). Falling back to internal AST parser.", exc
             )
-            
+
             graph = ASTGraphBuilder().build(Path(repo_path))
-            
+
             nodes_json = []
             for v in graph.nodes.values():
                 d = asdict(v)
                 d["id"] = d.pop("node_id")
                 d["type"] = d.pop("node_type")
                 nodes_json.append(d)
-                
+
             edges_json = []
             for e in graph.edges:
                 d = asdict(e)
@@ -139,13 +140,13 @@ class ReverseEngineeringSDK:
         Returns a PipelineResult with report path and token usage summary.
         """
         if llm_call is None:
-            from ..shared.gatekeeper import ApiGatekeeper, RateLimitConfig
             from ..services.llm import OpenAILLM
-            
+            from ..shared.gatekeeper import ApiGatekeeper, RateLimitConfig
+
             rate_limits = self._config.get_rate_limits()
             rl_config = RateLimitConfig.from_dict(rate_limits)
             gatekeeper = ApiGatekeeper(rl_config)
-            
+
             api_key = self._config.get_api_key("LLM_API_KEY")
             llm_call = OpenAILLM(gatekeeper, api_key)
 

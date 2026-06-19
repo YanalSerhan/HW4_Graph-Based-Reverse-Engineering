@@ -4,14 +4,15 @@ CLI entry point for the Reverse Engineering SDK.
 
 import argparse
 import json
-import sys
 import subprocess
-from pathlib import Path
+import sys
 from dataclasses import asdict
+from pathlib import Path
 
-from graph_rev_eng.services.github_downloader import GitHubDownloaderAgent
-from graph_rev_eng.services.ast_parser import ASTGraphBuilder
 from graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
+from graph_rev_eng.services.ast_parser import ASTGraphBuilder
+from graph_rev_eng.services.github_downloader import GitHubDownloaderAgent
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -45,20 +46,20 @@ def main() -> None:
     print(f"      Cloned to: {repo_path}")
 
     # 2. Run AST parser -> graph.json
-    print(f"\n[2/4] Running AST Parser to build architectural graph...")
+    print("\n[2/4] Running AST Parser to build architectural graph...")
     graph = ASTGraphBuilder().build(repo_path)
-    
+
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     graph_path = out_dir / "graph.json"
-    
+
     nodes_json = []
     for v in graph.nodes.values():
         d = asdict(v)
         d["id"] = d.pop("node_id")
         d["type"] = d.pop("node_type")
         nodes_json.append(d)
-        
+
     edges_json = []
     for e in graph.edges:
         d = asdict(e)
@@ -77,7 +78,7 @@ def main() -> None:
     print(f"      Saved graph to: {graph_path}")
 
     # 3. Build Obsidian vault -> obsidian/
-    print(f"\n[3/4] Building Obsidian Vault...")
+    print("\n[3/4] Building Obsidian Vault...")
     try:
         # Run the existing script which we know works well
         subprocess.run([sys.executable, "generate_obsidian.py"], check=True)
@@ -85,10 +86,10 @@ def main() -> None:
         print(f"      Error generating Obsidian vault: {e}")
 
     # 4. Run full AgentCrew pipeline
-    print(f"\n[4/4] Running AgentCrew pipeline...")
+    print("\n[4/4] Running AgentCrew pipeline...")
     sdk = ReverseEngineeringSDK()
     report_path = out_dir / "final_report.md"
-    
+
     pipeline_result = sdk.run_agents(
         task=args.query,
         github_url=args.repo_url,

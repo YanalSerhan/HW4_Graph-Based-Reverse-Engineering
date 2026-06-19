@@ -20,3 +20,4 @@ Thumbs.db
 .pytest_cache/
 htmlcov/
 .coverage
+scratch_*.py

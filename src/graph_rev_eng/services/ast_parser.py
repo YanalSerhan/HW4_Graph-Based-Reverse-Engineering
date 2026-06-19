@@ -23,9 +23,9 @@ class ASTGraphBuilder:
     def build(self, repo_path: Path) -> Graph:
         graph = Graph()
         py_files = list(repo_path.glob("**/*.py"))
-        
+
         logger.info("AST Parser: Found %d Python files in %s", len(py_files), repo_path)
-        
+
         for py_file in py_files:
             if py_file.name.endswith('_fixed.py'):
                 continue
@@ -67,7 +67,9 @@ class ASTGraphBuilder:
 
         return graph
 
-    def _process_ast_tree(self, tree: ast.AST, file_node_id: str, file_path: str, graph: Graph) -> None:
+    def _process_ast_tree(
+        self, tree: ast.AST, file_node_id: str, file_path: str, graph: Graph
+    ) -> None:
         """Walks the AST and extracts nodes/edges."""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
@@ -110,7 +112,7 @@ class ASTGraphBuilder:
                     name = func.id
                 elif isinstance(func, ast.Attribute):
                     name = func.attr
-                
+
                 # Check if it's a builtin
                 import builtins
                 if name and name not in dir(builtins):

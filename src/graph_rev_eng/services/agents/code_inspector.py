@@ -149,29 +149,32 @@ class CodeInspectorAgent(BaseAgent, LLMStubMixin):
                 edge_type=EDGE_TYPE_AMBIGUOUS,
             )
 
-        if insight.title.startswith("Hub:"):
-            if insight.source_node_ids:
-                node_id = insight.source_node_ids[0]
-                node = graph.get_node(node_id)
-                if node and node.file_path:
-                    file_path = self._repo_path / node.file_path
-                    if file_path.exists():
-                        code = file_path.read_text(encoding="utf-8", errors="replace")
-                        prompt = (
-                            f"You are the CodeInspectorAgent. Evaluate the hub node insight '{insight.title}'.\n"
-                            f"Here is the real source code for {node.file_path}:\n```python\n{code}\n```\n"
-                            "Analyze this code to confirm its role. You MUST quote actual lines of code in your analysis. Do not use hypothetical descriptions."
-                        )
-                        t_in = self._counter.estimate_tokens(prompt)
-                        response = self._llm_call(prompt)
-                        t_out = self._counter.estimate_tokens(response)
-                        self._counter.record(TokenUsage(AGENT_NAME, t_in, t_out))
-                        return InspectionResult(
-                            insight_title=insight.title,
-                            outcome=ValidationOutcome.CONFIRMED,
-                            evidence=response,
-                            edge_type="CODE_INSPECTION"
-                        )
+        if insight.title.startswith("Hub:") and insight.source_node_ids:
+            node_id = insight.source_node_ids[0]
+            node = graph.get_node(node_id)
+            if node and node.file_path:
+                file_path = self._repo_path / node.file_path
+                if file_path.exists():
+                    code = file_path.read_text(encoding="utf-8", errors="replace")
+                    prompt = (
+                        "You are the CodeInspectorAgent. Evaluate the hub node "
+                        f"insight '{insight.title}'.\n"
+                        f"Here is the real source code for {node.file_path}:\n"
+                        f"```python\n{code}\n```\n"
+                        "Analyze this code to confirm its role. You MUST quote actual "
+                        "lines of code "
+                        "in your analysis. Do not use hypothetical descriptions."
+                    )
+                    t_in = self._counter.estimate_tokens(prompt)
+                    response = self._llm_call(prompt)
+                    t_out = self._counter.estimate_tokens(response)
+                    self._counter.record(TokenUsage(AGENT_NAME, t_in, t_out))
+                    return InspectionResult(
+                        insight_title=insight.title,
+                        outcome=ValidationOutcome.CONFIRMED,
+                        evidence=response,
+                        edge_type="CODE_INSPECTION"
+                    )
 
         related_inferred = [
             e

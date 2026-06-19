@@ -4,9 +4,8 @@ OpenAI LLM wrapper to be used with ApiGatekeeper.
 
 import json
 import logging
-import urllib.request
 import urllib.error
-from typing import Any
+import urllib.request
 
 from ..shared.gatekeeper import ApiGatekeeper
 
@@ -58,12 +57,14 @@ class OpenAILLM:
                 "model": self.model,
                 "messages": [{"role": "user", "content": prompt}],
             }
-            req = urllib.request.Request(url, data=json.dumps(data).encode("utf-8"), headers=headers)
+            req = urllib.request.Request(
+                url, data=json.dumps(data).encode("utf-8"), headers=headers
+            )
             try:
                 with urllib.request.urlopen(req) as response:
                     res_body = response.read().decode("utf-8")
                     res_json = json.loads(res_body)
-                    
+
                     text = res_json["choices"][0]["message"]["content"]
                     usage = res_json.get("usage", {})
                     in_toks = usage.get("prompt_tokens", 0)
@@ -73,7 +74,7 @@ class OpenAILLM:
                 err_msg = e.read().decode('utf-8')
                 logger.error("OpenAI API HTTPError: %s", err_msg)
                 raise
-        
+
         # Execute through gatekeeper to enforce rate limits
         response = self.gatekeeper.execute(_api_call)
         return response.text
