@@ -56,6 +56,7 @@ def test_sdk_route_skill(mock_sr):
     assert sdk.route_skill("query") == "routed"
     mock_inst.route.assert_called_once()
 
+@patch.dict("os.environ", {"LLM_API_KEY": "dummy_key"})
 @patch("graph_rev_eng.sdk.sdk.AgentCrew")
 @patch("graph_rev_eng.shared.gatekeeper.ApiGatekeeper")
 @patch("graph_rev_eng.services.llm.OpenAILLM")
