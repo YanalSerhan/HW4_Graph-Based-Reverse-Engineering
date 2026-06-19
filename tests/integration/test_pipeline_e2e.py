@@ -5,7 +5,7 @@ def test_pipeline_e2e(tmp_path):
     sdk = ReverseEngineeringSDK()
 
     class MockCloner:
-        def clone(self, url):
+        def clone(self, url, target):
             return tmp_path / "mock_repo"
 
     graph_path = tmp_path / "graph.json"
@@ -19,7 +19,8 @@ def test_pipeline_e2e(tmp_path):
         github_url="https://github.com/test/test",
         graph_path=graph_path,
         report_path=tmp_path / "report.md",
-        cloner=MockCloner()
+        cloner=MockCloner(),
+        llm_call=mock_llm_call,
     )
 
     assert res.report_path.exists()
