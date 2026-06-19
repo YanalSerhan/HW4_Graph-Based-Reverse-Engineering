@@ -150,6 +150,63 @@ In strict adherence to professional software development guidelines, this projec
 └── README.md
 ```
 
+## Configuration Guide
+The project relies on a modular configuration system located in the `config/` directory:
+- **`setup.json`**: Contains global project settings such as the version, project name, and default logging level (`log_level`).
+- **`rate_limits.json`**: Configures the `ApiGatekeeper` for safe LLM querying. It defines the constraints for API calls including `requests_per_minute`, `requests_per_hour`, `concurrent_max`, and `max_retries`. This ensures we do not hit API rate limits when the agent crew is running at full speed.
+- **`logging_config.json`**: Defines the formatters, handlers, and logging levels used by the Python `logging` module to keep output clean and structured.
+- **`.env`**: Must contain the `OPENAI_API_KEY` to authenticate the LLM calls. A template is provided in `.env-example`.
+
+## Architecture Schema
+The system delegates all logic from the `ReverseEngineeringSDK` to specialized domain services. Below is a high-level OOP schema of the system architecture.
+
+```mermaid
+classDiagram
+    class ReverseEngineeringSDK {
+        -ConfigManager _config
+        -TokenCounter _token_counter
+        +run_grphify(repo_path: str)
+        +load_graph(graph_path: Path)
+        +build_index(graph: Graph)
+        +route_skill(query: str)
+        +run_agents(task: str)
+    }
+
+    class ApiGatekeeper {
+        -RateLimitConfig _config
+        -Queue _queue
+        +execute(api_call)
+    }
+
+    class AgentCrew {
+        -PipelineConfig config
+        +run() PipelineResult
+    }
+    
+    class CommunityDetector {
+        +detect(graph: Graph)
+    }
+
+    ReverseEngineeringSDK --> AgentCrew : orchestrates
+    ReverseEngineeringSDK --> CommunityDetector : uses
+    AgentCrew --> ApiGatekeeper : routes LLM calls through
+```
+
+## Contribution Guidelines
+To ensure code quality and consistency:
+1. **Dependency Management**: We strictly use `uv` for dependency management. Do not use `pip install`. All dependencies are locked in `uv.lock`. Use `uv sync` to install.
+2. **File Length Limits**: Following strict modularity rules, no source file should exceed **150 lines** of code. Extract separate logic into mixins or utilities if a class grows too large.
+3. **Linting**: All code must pass `ruff` with zero violations before merging. Run `uv run ruff check`.
+4. **Testing**: We maintain a minimum of 85% test coverage. Write tests for all new features and verify by running `uv run pytest --cov`.
+
+## License & Credits
+This project is licensed under the [MIT License](LICENSE).
+
+**Credits:**
+- AST Parsing and Graph generation powered by [Graphify](https://github.com/google/graphify).
+- Multi-agent orchestration modeled after [CrewAI](https://github.com/joaomdmoura/crewAI).
+- LLM integration via [LangChain](https://github.com/langchain-ai/langchain).
+
 ## Creative Extensions
 To exceed baseline project requirements, we designed and implemented two major creative extensions:
 1. **Graph Diff Engine:** The `graph_differ.py` utility automatically computes the delta between graphs to objectively measure architectural health improvements over time.
