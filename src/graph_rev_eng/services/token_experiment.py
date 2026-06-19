@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import urllib.error
@@ -12,7 +13,7 @@ def call_openai(prompt: str) -> tuple[int, int]:
         if env_path.exists():
             for line in env_path.read_text().splitlines():
                 if line.startswith("LLM_API_KEY="):
-                    api_key = line.split("=", 1)[1].strip()
+                    api_key = line.split("=", 1)[1].strip().strip('"').strip("'")
                     break
     if not api_key:
         raise ValueError("LLM_API_KEY environment variable not set.")
@@ -42,53 +43,85 @@ def call_openai(prompt: str) -> tuple[int, int]:
 
 
 def main():
-    query = "What are the main architectural issues in this codebase?"
+    queries = [
+        "What are the main architectural issues in this codebase?",
+        "How is the ApiGatekeeper implemented?",
+        "Where does the ContextBudgetManager calculate limits?",
+        "Are there any circular dependencies between the services?",
+        "How does the HubVsBottleneckClassifier handle cross-community ratios?"
+    ]
 
     # Scenario A: Naive RAG (All python files)
     naive_content = ""
     for p in Path("data/broken-python").rglob("*.py"):
         naive_content += f"\n\n--- {p.name} ---\n"
-        naive_content += p.read_text(encoding="utf-8")
-
-    prompt_a = f"{query}\n\nCodebase:\n{naive_content}"
-
-    print("Running Scenario A (Naive RAG)...")
-    in_a, out_a = call_openai(prompt_a)
-    tot_a = in_a + out_a
-    cost_a = (in_a / 1_000_000) * 0.15 + (out_a / 1_000_000) * 0.60
+        with contextlib.suppress(BaseException):
+            naive_content += p.read_text(encoding="utf-8")
 
     # Scenario B: Graph-guided
     graph_content = ""
-    for p in [Path("obsidian/index.md"), Path("obsidian/hot.md")]:
+    for p in [Path("results/wiki/index.md"), Path("results/wiki/hot.md")]:
         graph_content += f"\n\n--- {p.name} ---\n"
-        if p.exists():
+        with contextlib.suppress(BaseException):
             graph_content += p.read_text(encoding="utf-8")
 
-    prompt_b = f"{query}\n\nContext:\n{graph_content}"
+    results = [
+        "| Query | Scenario | Input Tokens | Output Tokens | Total Tokens | Cost (USD) |",
+        "|---|---|---|---|---|---|"
+    ]
 
-    print("Running Scenario B (Graph-guided)...")
-    in_b, out_b = call_openai(prompt_b)
-    tot_b = in_b + out_b
-    cost_b = (in_b / 1_000_000) * 0.15 + (out_b / 1_000_000) * 0.60
+    tot_in_a = tot_out_a = tot_in_b = tot_out_b = 0
 
-    # Calculate reduction
+    for i, query in enumerate(queries, 1):
+        prompt_a = f"{query}\n\nCodebase:\n{naive_content}"
+        print(f"Running Query {i} Scenario A (Naive RAG)...")
+        in_a, out_a = call_openai(prompt_a)
+        tot_in_a += in_a
+        tot_out_a += out_a
+        cost_a = (in_a / 1_000_000) * 0.15 + (out_a / 1_000_000) * 0.60
+
+        prompt_b = f"{query}\n\nContext:\n{graph_content}"
+        print(f"Running Query {i} Scenario B (Graph-guided)...")
+        in_b, out_b = call_openai(prompt_b)
+        tot_in_b += in_b
+        tot_out_b += out_b
+        cost_b = (in_b / 1_000_000) * 0.15 + (out_b / 1_000_000) * 0.60
+
+        results.append(
+            f"| Q{i} | Naive RAG | {in_a} | {out_a} | {in_a+out_a} | ${cost_a:.6f} |"
+        )
+        results.append(
+            f"| Q{i} | Graph-guided | {in_b} | {out_b} | {in_b+out_b} | ${cost_b:.6f} |"
+        )
+
     def reduction(a, b):
         if a == 0:
             return 0.0
         return ((a - b) / a) * 100
 
-    red_in = reduction(in_a, in_b)
-    red_out = reduction(out_a, out_b)
-    red_tot = reduction(tot_a, tot_b)
-    red_cost = reduction(cost_a, cost_b)
+    tot_a = tot_in_a + tot_out_a
+    tot_b = tot_in_b + tot_out_b
+    tot_cost_a = (tot_in_a / 1_000_000) * 0.15 + (tot_out_a / 1_000_000) * 0.60
+    tot_cost_b = (tot_in_b / 1_000_000) * 0.15 + (tot_out_b / 1_000_000) * 0.60
 
-    results = [
-        "| Scenario | Input Tokens | Output Tokens | Total Tokens | Cost (USD) |",
-        "|---|---|---|---|---|",
-        f"| Naive RAG | {in_a} | {out_a} | {tot_a} | ${cost_a:.6f} |",
-        f"| Graph-guided | {in_b} | {out_b} | {tot_b} | ${cost_b:.6f} |",
-        f"| Reduction | {red_in:.1f}% | {red_out:.1f}% | {red_tot:.1f}% | {red_cost:.1f}% |",
-    ]
+    red_in = reduction(tot_in_a, tot_in_b)
+    red_out = reduction(tot_out_a, tot_out_b)
+    red_tot = reduction(tot_a, tot_b)
+    red_cost = reduction(tot_cost_a, tot_cost_b)
+
+    results.append("|---|---|---|---|---|---|")
+    results.append(
+        f"| **TOTAL** | Naive RAG | {tot_in_a} | {tot_out_a} | "
+        f"{tot_a} | ${tot_cost_a:.6f} |"
+    )
+    results.append(
+        f"| **TOTAL** | Graph-guided | {tot_in_b} | {tot_out_b} | "
+        f"{tot_b} | ${tot_cost_b:.6f} |"
+    )
+    results.append(
+        f"| **Reduction** | - | **{red_in:.1f}%** | **{red_out:.1f}%** | "
+        f"**{red_tot:.1f}%** | **{red_cost:.1f}%** |"
+    )
 
     out_path = Path("results/token_analysis.md")
     out_path.parent.mkdir(exist_ok=True)

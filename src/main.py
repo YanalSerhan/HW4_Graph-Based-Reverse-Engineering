@@ -3,14 +3,11 @@ CLI entry point for the Reverse Engineering SDK.
 """
 
 import argparse
-import json
 import subprocess
 import sys
-from dataclasses import asdict
 from pathlib import Path
 
 from graph_rev_eng.sdk.sdk import ReverseEngineeringSDK
-from graph_rev_eng.services.ast_parser import ASTGraphBuilder
 from graph_rev_eng.services.github_downloader import GitHubDownloaderAgent
 
 
@@ -46,36 +43,20 @@ def main() -> None:
     repo_path = downloader.run(args.repo_url)
     print(f"      Cloned to: {repo_path}")
 
-    # 2. Run AST parser -> graph.json
-    print("\n[2/4] Running AST Parser to build architectural graph...")
-    graph = ASTGraphBuilder().build(repo_path)
-
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    graph_path = out_dir / "graph.json"
+    sdk = ReverseEngineeringSDK()
 
-    nodes_json = []
-    for v in graph.nodes.values():
-        d = asdict(v)
-        d["id"] = d.pop("node_id")
-        d["type"] = d.pop("node_type")
-        nodes_json.append(d)
+    # 2. Run Grphify CLI (or AST fallback) -> graph.json
+    print("\n[2/4] Running Grphify to build architectural graph...")
+    graph_path, html_path, graph_report_path = sdk.run_grphify(str(repo_path))
 
-    edges_json = []
-    for e in graph.edges:
-        d = asdict(e)
-        d["source"] = d.pop("source_id")
-        d["target"] = d.pop("target_id")
-        # Keep edge_type instead of popping it to type
-        edges_json.append(d)
-
-    with open(graph_path, "w", encoding="utf-8") as f:
-        json.dump(
-            {"nodes": nodes_json, "edges": edges_json, "hyperedges": [], "metadata": {}},
-            f,
-            indent=2,
-        )
+    # Load the graph back into memory for later steps
+    graph = sdk.load_graph(graph_path)
     print(f"      Saved graph to: {graph_path}")
+    print(f"      Saved interactive graph to: {html_path}")
+    print(f"      Saved narrative report to: {graph_report_path}")
+
 
     # 3. Build Obsidian vault -> obsidian/
     print("\n[3/4] Building Obsidian Vault...")

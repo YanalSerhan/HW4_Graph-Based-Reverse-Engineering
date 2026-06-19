@@ -6,6 +6,10 @@ import json
 import logging
 import urllib.error
 import urllib.request
+from typing import Any
+
+from langchain_core.language_models.llms import LLM
+from pydantic import Field
 
 from ..shared.gatekeeper import ApiGatekeeper
 
@@ -23,6 +27,12 @@ class LLMResponse:
         self.cost = self._estimate_cost(model, input_tokens, output_tokens)
 
     def _estimate_cost(self, model: str, in_toks: int, out_toks: int) -> float:
+        """
+        Estimate the financial cost of the LLM call.
+
+        Why: We need to proactively track and estimate API costs before billing to stay
+        within our configured token budgets and ensure the pipeline remains cost-effective.
+        """
         if model.startswith("gpt-4o-mini"):
             return (in_toks / 1_000_000) * 0.150 + (out_toks / 1_000_000) * 0.600
         elif model.startswith("gpt-4o"):
@@ -78,3 +88,43 @@ class OpenAILLM:
         # Execute through gatekeeper to enforce rate limits
         response = self.gatekeeper.execute(_api_call)
         return response.text
+
+
+class GatekeeperLangchainLLM(LLM):
+    """
+    Langchain LLM wrapper that routes calls through ApiGatekeeper.
+
+    Why: Adapts standard Langchain components to our custom rate-limited environment,
+    ensuring third-party library compatibility while respecting our gatekeeper rules.
+    """
+    gatekeeper: Any = Field(exclude=True)
+    openai_api_key: str
+    model_name: str = "gpt-4o-mini"
+
+    @property
+    def _llm_type(self) -> str:
+        return "custom_gatekeeper_llm"
+
+    def _call(
+        self,
+        prompt: str,
+        stop: list[str] | None = None,
+        run_manager: Any | None = None,
+        **kwargs: Any,
+    ) -> str:
+        """
+        Internal Langchain call implementation.
+
+        Why: We intercept standard Langchain execution to force all LLM interactions
+        through the central Gatekeeper for rate limit enforcement.
+        """
+        wrapper = OpenAILLM(self.gatekeeper, self.openai_api_key, self.model_name)
+        return wrapper(prompt)
+
+    def __call__(self, prompt: str, **kwargs: Any) -> str:
+        """
+        Direct callable implementation.
+
+        Why: Provides a simplified direct invocation method identical to the Langchain interface.
+        """
+        return self._call(prompt, **kwargs)

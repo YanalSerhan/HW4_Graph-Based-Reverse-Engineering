@@ -29,6 +29,11 @@ FACTS = [
     ("welcome_message is defined in polygons.py", False),
     ("print_final_scores is defined in mathsquiz.py", False),
     ("mathsquiz.py calls ask_question", False),
+    ("The CLI module is decoupled from the core orchestration SDK", True),
+    ("The GraphLoader component can operate without a network connection", True),
+    ("ApiGatekeeper state is shared globally across the module without passing instances", False),
+    ("ContextBudgetManager implements a Dropping Skill fallback to prevent context overflow", True),
+    ("The improvement loop automatically overwrites original source code files", False),
 ]
 
 
@@ -113,7 +118,7 @@ def main():
         ]
     )
 
-    out_path = Path("results/confusion_matrix.md")
+    out_path = Path("results/agent_confusion_matrix.md")
     out_path.parent.mkdir(exist_ok=True, parents=True)
     out_path.write_text("\n".join(results_md), encoding="utf-8")
     print(f"\nSaved confusion matrix to {out_path}")

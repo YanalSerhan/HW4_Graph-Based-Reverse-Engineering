@@ -136,4 +136,3 @@ class ContextBudgetManager:
             return path.read_text(encoding="utf-8")
         return f"[Page '{relative_path}' not found]"
 
-

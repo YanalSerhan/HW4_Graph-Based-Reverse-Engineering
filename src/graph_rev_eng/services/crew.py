@@ -19,9 +19,7 @@ from .crew_steps import (
     step_write_report,
 )
 from .crew_steps_agents import (
-    step_analyse,
     step_detect_bugs,
-    step_inspect,
 )
 from .crew_types import PipelineConfig, PipelineResult
 from .improvement_loop import run_improvement_loop
@@ -56,30 +54,14 @@ class AgentCrew:
 
         step_build_index(self._config, graph, communities, errors)
 
-        insights = step_analyse(
+        from .crew_orchestrator import run_crew_orchestration
+        insights, inspection_results, bugs = run_crew_orchestration(
             self._config,
             graph,
             communities,
             repo_path,
             self._counter,
-            self._budgets["GraphAnalystAgent"],
-            errors,
-        )
-        inspection_results = step_inspect(
-            self._config,
-            graph,
-            insights,
-            repo_path,
-            self._counter,
-            self._budgets["CodeInspectorAgent"],
-            errors,
-        )
-        bugs = step_detect_bugs(
-            self._config,
-            graph,
-            communities,
-            self._counter,
-            self._budgets["ArchitecturalBugDetector"],
+            self._budgets,
             errors,
         )
 

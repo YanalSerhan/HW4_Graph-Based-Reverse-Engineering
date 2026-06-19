@@ -253,8 +253,8 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
   ```
 - [x] [P1] [Done] [Owner: AI Agent] Run `uv run pytest --cov=src --cov-report=term-missing` — confirm ≥ 85% coverage
 - [x] [P1] [Done] [Owner: AI Agent] Document all edge cases with explicit test cases: empty graph, graph with no communities, Ambiguous-only edge graph, token budget exceeded mid-session
-- [ ] [P1] [Not Started] [Owner: AI Agent] Save automated test reports to `results/test_report.html` or `results/coverage_report/`
-- [ ] [P1] [Not Started] [Owner: AI Agent] Implement automation in a CI/CD pipeline (`automation in CI/CD pipeline`) to automatically generate and check test coverage reports
+- [x] [P1] [Done] [Owner: AI Agent] Save automated test reports to `results/test_report.html` or `results/coverage_report/`
+- [x] [P1] [Done] [Owner: AI Agent] Implement automation in a CI/CD pipeline (`automation in CI/CD pipeline`) to automatically generate and check test coverage reports
 
 ---
 
@@ -344,7 +344,7 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 8.2 — ISO/IEC 25010 Compliance Self-Assessment
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] Complete a self-assessment table in `docs/quality_assessment.md` covering all 8 quality characteristics:
+- [x] [P1] [Done] [Owner: AI Agent] Complete a self-assessment table in `docs/quality_assessment.md` covering all 8 quality characteristics:
   - Functional Suitability (correctness, completeness, appropriateness)
   - Performance Efficiency (time behavior, resource utilization)
   - Compatibility (interoperability)
@@ -363,8 +363,8 @@ Run through every item in the submission guidelines' final checklist and mark ea
 - [x] [P1] [Done] [Owner: AI Agent] **Quality & Testing**: TDD workflow followed, ≥ 85% test coverage, `ruff check` zero errors, edge cases documented and tested, automated test reports saved
 - [x] [P1] [Done] [Owner: AI Agent] **Security & Config**: separate config files with versioning, `.env-example` present, zero secrets in source code, `.gitignore` updated, `uv` as sole package manager, `uv.lock` and `pyproject.toml` committed
 - [x] [P1] [Done] [Owner: AI Agent] **Research & Visualization**: parameter sensitivity analysis, token efficiency experiment with cost table, high-quality visualizations, analysis notebook
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Standards & Extensibility**: plugin/extension points documented, package organized as proper Python package, ISO/IEC 25010 self-assessment, references to MIT SQA / Google Engineering / Microsoft API / Nielsen guidelines
-- [ ] [P1] [Not Started] [Owner: AI Agent] **General**: clean Git history with meaningful commit messages, license file, deployment instructions
+- [x] [P1] [Done] [Owner: AI Agent] **Standards & Extensibility**: plugin/extension points documented, package organized as proper Python package, ISO/IEC 25010 self-assessment, references to MIT SQA / Google Engineering / Microsoft API / Nielsen guidelines
+- [x] [P1] [Done] [Owner: AI Agent] **General**: clean Git history with meaningful commit messages, license file, deployment instructions
 
 ### 8.4 — Git History & Release
 

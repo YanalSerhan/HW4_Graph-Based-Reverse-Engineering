@@ -165,212 +165,212 @@
   ],
   "edges": [
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "contains",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "func:mathsquiz/mathsquiz-step2.py:welcome_message"
+      "target": "func:mathsquiz/mathsquiz-step2.py:welcome_message",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "contains",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "func:mathsquiz/mathsquiz-step2.py:ask_question"
+      "target": "func:mathsquiz/mathsquiz-step2.py:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "contains",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "func:mathsquiz/mathsquiz-step2.py:print_final_scores"
+      "target": "func:mathsquiz/mathsquiz-step2.py:print_final_scores",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:welcome_message"
+      "target": "call:welcome_message",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:print_final_scores"
+      "target": "call:print_final_scores",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step2.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "imports",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "module:random"
+      "target": "module:random",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "contains",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "func:mathsquiz/mathsquiz-step3.py:welcome_message"
+      "target": "func:mathsquiz/mathsquiz-step3.py:welcome_message",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "contains",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "func:mathsquiz/mathsquiz-step3.py:ask_question"
+      "target": "func:mathsquiz/mathsquiz-step3.py:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "contains",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "func:mathsquiz/mathsquiz-step3.py:print_final_scores"
+      "target": "func:mathsquiz/mathsquiz-step3.py:print_final_scores",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "call:welcome_message"
+      "target": "call:welcome_message",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "call:print_final_scores"
+      "target": "call:print_final_scores",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "call:randint"
+      "target": "call:randint",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "call:randint"
+      "target": "call:randint",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "EXTRACTED",
       "confidence": 1.0,
       "label": "calls",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz-step3.py",
-      "target": "call:ask_question"
+      "target": "call:ask_question",
+      "type": "EXTRACTED"
     },
     {
-      "edge_type": "AMBIGUOUS",
       "confidence": 0.4,
       "label": "has_error",
       "metadata": {},
       "source": "file:mathsquiz/mathsquiz.py",
-      "target": "error:mathsquiz/mathsquiz.py:syntax"
+      "target": "error:mathsquiz/mathsquiz.py:syntax",
+      "type": "AMBIGUOUS"
     },
     {
-      "edge_type": "AMBIGUOUS",
       "confidence": 0.4,
       "label": "has_error",
       "metadata": {},
       "source": "file:polygons/polygons.py",
-      "target": "error:polygons/polygons.py:syntax"
+      "target": "error:polygons/polygons.py:syntax",
+      "type": "AMBIGUOUS"
     }
   ],
   "hyperedges": [],

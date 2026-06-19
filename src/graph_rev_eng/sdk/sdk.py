@@ -81,7 +81,7 @@ class ReverseEngineeringSDK:
         Returns a PipelineResult with report path and token usage summary.
         """
         if llm_call is None:
-            from ..services.llm import OpenAILLM
+            from ..services.llm import GatekeeperLangchainLLM
             from ..shared.gatekeeper import ApiGatekeeper, RateLimitConfig
 
             rate_limits = self._config.get_rate_limits()
@@ -89,7 +89,9 @@ class ReverseEngineeringSDK:
             gatekeeper = ApiGatekeeper(rl_config)
 
             api_key = self._config.get_api_key("LLM_API_KEY")
-            llm_call = OpenAILLM(gatekeeper, api_key)
+            llm_call = GatekeeperLangchainLLM(
+                gatekeeper=gatekeeper, openai_api_key=api_key or "STUB_KEY"
+            )
 
         config = PipelineConfig(
             github_url=github_url,
