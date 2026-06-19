@@ -98,6 +98,11 @@ The system enforces a strict separation of concerns regarding knowledge storage:
 *   **Decision:** Enforce Index-First Retrieval.
 *   **Rationale:** Loading the full graph bloats the prompt. Forcing the agent to read `index.md` first acts as a cognitive routing step, ensuring it only loads the 2-3 subgraphs strictly necessary for the task, drastically reducing token spend.
 
+### ADR 4: Micro-Module Splitting (150-Line Limit Enforcement)
+*   **Context:** Strict architectural constraint to keep all files ≤ 150 lines of code.
+*   **Decision:** Extract cohesive logic into dedicated helper modules (e.g., `bug_rules.py`, `inspector_helpers.py`, `analyst_helpers.py`, `improvement_loop.py`, `crew_steps.py`, `graph_differ_format.py`).
+*   **Rationale:** Keeps the core orchestrator classes and main services small and highly focused while avoiding massive logic dumps in a single file. Reduces cognitive load and enforces strict single responsibility.
+
 ## 4. API Gatekeeper Interface
 
 The `ApiGatekeeper` acts as the sole chokepoint for all external LLM network traffic, enforcing strict rate limits and capturing token metrics.

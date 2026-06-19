@@ -1,15 +1,16 @@
 """
 Tests for ASTGraphBuilder and ast_node_processor.
 """
+
 from pathlib import Path
 
-import pytest
 from graph_rev_eng.constants import EDGE_TYPE_AMBIGUOUS, EDGE_TYPE_EXTRACTED
 from graph_rev_eng.services.ast_parser import ASTGraphBuilder
 
 
 def test_simple_valid_python_file(tmp_path: Path):
-    """Test that parsing a simple valid Python file with one function produces a module and function node."""
+    """Test that parsing a simple valid Python file with one function produces
+    a module and function node."""
     file_path = tmp_path / "simple.py"
     file_path.write_text(
         "def hello():\n    pass\n",
@@ -80,7 +81,8 @@ def test_import_statement(tmp_path: Path):
 
 
 def test_syntax_error_python2_print(tmp_path: Path):
-    """Test that a file with a Python 2 print statement produces an error node with AMBIGUOUS edge."""
+    """Test that a file with a Python 2 print statement produces an error node
+    with AMBIGUOUS edge."""
     file_path = tmp_path / "py2.py"
     file_path.write_text(
         "def bad():\n    print 'Hello Python 2'\n",
@@ -91,7 +93,7 @@ def test_syntax_error_python2_print(tmp_path: Path):
     graph = builder.build(tmp_path)
 
     assert "error:py2.py:syntax" in graph.nodes
-    
+
     # Check for AMBIGUOUS edge
     ambiguous_edges = [e for e in graph.edges if e.edge_type == EDGE_TYPE_AMBIGUOUS]
     assert len(ambiguous_edges) == 1
@@ -120,6 +122,6 @@ def test_empty_directory(tmp_path: Path):
     """Test that an empty directory produces an empty graph."""
     builder = ASTGraphBuilder()
     graph = builder.build(tmp_path)
-    
+
     assert len(graph.nodes) == 0
     assert len(graph.edges) == 0

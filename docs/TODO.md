@@ -334,13 +334,13 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 ### 8.1 — README.md (Comprehensive)
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Installation instructions**: system requirements, step-by-step setup using `uv sync`, Grphify CLI installation, Obsidian setup
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Usage instructions**: typical workflow with exact CLI commands, flag descriptions, example with `BugsInPy`
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Code examples**: 3 concrete usage snippets demonstrating the SDK, a CLI invocation, and a sample agent output
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Configuration guide**: explain every key in `config/setup.json` and `config/rate_limits.json`
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Contribution guidelines**: code style, test requirements, PR process
-- [ ] [P1] [Not Started] [Owner: AI Agent] **License and attribution**: third-party library licenses (Grphify, CrewAI/LangGraph, etc.)
-- [ ] [P1] [Not Started] [Owner: AI Agent] Link to `results/graph.html` (interactive visualization) and `results/final_report.md`
+- [x] [P1] [Done] [Owner: AI Agent] **Installation instructions**: system requirements, step-by-step setup using `uv sync`, Grphify CLI installation, Obsidian setup
+- [x] [P1] [Done] [Owner: AI Agent] **Usage instructions**: typical workflow with exact CLI commands, flag descriptions, example with `BugsInPy`
+- [x] [P1] [Done] [Owner: AI Agent] **Code examples**: 3 concrete usage snippets demonstrating the SDK, a CLI invocation, and a sample agent output
+- [x] [P1] [Done] [Owner: AI Agent] **Configuration guide**: explain every key in `config/setup.json` and `config/rate_limits.json`
+- [x] [P1] [Done] [Owner: AI Agent] **Contribution guidelines**: code style, test requirements, PR process
+- [x] [P1] [Done] [Owner: AI Agent] **License and attribution**: third-party library licenses (Grphify, CrewAI/LangGraph, etc.)
+- [x] [P1] [Done] [Owner: AI Agent] Link to `results/graph.html` (interactive visualization) and `results/final_report.md`
 
 ### 8.2 — ISO/IEC 25010 Compliance Self-Assessment
 
@@ -358,10 +358,10 @@ Each PRD above must include: theoretical background, specific I/O requirements, 
 
 Run through every item in the submission guidelines' final checklist and mark each as confirmed:
 
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Documentation**: `README.md` at root, `docs/` with `PRD.md`, `PLAN.md`, `TODO.md`, all mechanism PRDs, architecture diagrams, prompt log
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Code & Architecture**: SDK layer for all business logic, OOP with no duplication, API Gatekeeper for all LLM calls, rate limits from config, all files ≤ 150 lines, docstrings on all public APIs, consistent naming
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Quality & Testing**: TDD workflow followed, ≥ 85% test coverage, `ruff check` zero errors, edge cases documented and tested, automated test reports saved
-- [ ] [P1] [Not Started] [Owner: AI Agent] **Security & Config**: separate config files with versioning, `.env-example` present, zero secrets in source code, `.gitignore` updated, `uv` as sole package manager, `uv.lock` and `pyproject.toml` committed
+- [x] [P1] [Done] [Owner: AI Agent] **Documentation**: `README.md` at root, `docs/` with `PRD.md`, `PLAN.md`, `TODO.md`, all mechanism PRDs, architecture diagrams, prompt log
+- [x] [P1] [Done] [Owner: AI Agent] **Code & Architecture**: SDK layer for all business logic, OOP with no duplication, API Gatekeeper for all LLM calls, rate limits from config, all files ≤ 150 lines, docstrings on all public APIs, consistent naming
+- [x] [P1] [Done] [Owner: AI Agent] **Quality & Testing**: TDD workflow followed, ≥ 85% test coverage, `ruff check` zero errors, edge cases documented and tested, automated test reports saved
+- [x] [P1] [Done] [Owner: AI Agent] **Security & Config**: separate config files with versioning, `.env-example` present, zero secrets in source code, `.gitignore` updated, `uv` as sole package manager, `uv.lock` and `pyproject.toml` committed
 - [x] [P1] [Done] [Owner: AI Agent] **Research & Visualization**: parameter sensitivity analysis, token efficiency experiment with cost table, high-quality visualizations, analysis notebook
 - [ ] [P1] [Not Started] [Owner: AI Agent] **Standards & Extensibility**: plugin/extension points documented, package organized as proper Python package, ISO/IEC 25010 self-assessment, references to MIT SQA / Google Engineering / Microsoft API / Nielsen guidelines
 - [ ] [P1] [Not Started] [Owner: AI Agent] **General**: clean Git history with meaningful commit messages, license file, deployment instructions

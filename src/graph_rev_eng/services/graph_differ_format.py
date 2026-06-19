@@ -2,6 +2,7 @@
 graph_differ_format.py — Markdown formatting for GraphDiff.
 """
 from typing import TYPE_CHECKING
+
 from .graph_models import Graph
 
 if TYPE_CHECKING:
